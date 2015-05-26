@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language SYSTEM "language.dtd">
+<language name="FrostBasic" 
+	version="1.02" 
+	kateversion="2.2" 
+	section="Sources" 
+	extensions="*.frb;*.cb" 
+	mimetype="text/x-frostbasic-src"
+	author="Marko Ranta"
+	>
+    <highlighting>
+        <list name="keywords">
+			<item> Not </item> 
+			<item> Or </item> 
+			<item> Xor </item> 
+			<item> Mod </item> 
+			<item> Shr </item> 
+			<item> Shl </item> 
+			<item> Sar </item> 
+			<item> And </item> 
+			<item> If </item> 
+			<item> Then </item> 
+			<item> ElseIf </item> 
+			<item> Else </item> 
+			<item> EndIf </item> 
+			<item> Select </item> 
+			<item> Case </item> 
+			<item> Default </item> 
+			<item> EndSelect </item> 
+			<item> Function </item> 
+			<item> Return </item> 
+			<item> EndFunction </item> 
+			<item> Type </item> 
+			<item> Struct </item> 
+			<item> Field </item> 
+			<item> EndType </item> 
+			<item> EndStruct </item> 
+			<item> While </item> 
+			<item> Wend </item> 
+			<item> Repeat </item> 
+			<item> Forever </item> 
+			<item> Until </item> 
+			<item> Goto </item> 
+			<item> Gosub </item> 
+			<item> For </item> 
+			<item> To </item> 
+			<item> Each </item> 
+			<item> Step </item> 
+			<item> Next </item> 
+			<item> Dim </item> 
+			<item> ReDim </item> 
+			<item> ClearArray </item> 
+			<item> Const </item> 
+			<item> Global </item> 
+			<item> Data </item> 
+			<item> Read </item> 
+			<item> Restore </item> 
+			<item> As </item> 
+			<item> Exit </item> 
+			<item> End </item> 
+			<item> New </item> 
+			<item> First </item> 
+			<item> Last </item> 
+			<item> Before </item> 
+			<item> After </item> 
+			<item> Delete </item> 
+			<item> ArraySize </item> 
+			<item> Include </item>
+        </list>
+        <list name="types">
+			<item> String </item>
+			<item> Byte </item>
+			<item> Short </item>
+			<item> Integer </item>
+			<item> Float </item>
+			<item> Image </item>
+			<item> File </item>
+			<item> Font </item>
+			<item> MemBlock </item>
+        </list>
+		<list name="functions">
+			<item> Color </item> 
+			<item> PushColor </item> 
+			<item> PopColor </item> 
+			<item> GetPixel </item> 
+			<item> GetPixel </item> 
+			<item> PutPixel </item> 
+			<item> Lock </item> 
+			<item> Lock2 </item> 
+			<item> Unlock </item> 
+			<item> DrawScreen </item> 
+			<item> KeyHit </item> 
+			<item> KeyDown </item> 
+			<item> KeyUp </item> 
+			<item> MouseHit </item> 
+			<item> MouseDown </item> 
+			<item> MouseUp </item> 
+			<item> Int </item> 
+			<item> LoadImage </item> 
+			<item> DrawImage </item>
+			<item> DrawImageBox </item>
+			<item> DrawImageBoxScaled </item>
+			<item> DrawImageBoxResized </item>
+			<item> DrawGhostImage </item>
+			<item> DrawImageRotated </item>
+			<item> DrawImageRotated </item>
+			<item> DrawImageResizedRotated </item>
+			<item> DrawImageScaledRotated </item>
+			<item> DrawImageResized </item>
+			<item> DrawImageScaled </item>
+			<item> DrawImageAdvanced </item>
+			<item> DrawImageAdvanced2 </item>
+			<item> DrawTintedImage </item>
+			<item> DrawTintedImageBox </item>
+			<item> DrawTintedImageBoxResized </item>
+			<item> DrawTintedImageBoxScaled </item>
+			<item> DrawTintedImageRotated </item>
+			<item> DrawTintedImageResizedRotated </item>
+			<item> DrawTintedImageScaledRotated </item>
+			<item> DrawTintedImageResized </item>
+			<item> DrawTintedImageScaled </item>
+			<item> MakeImage </item>
+			<item> MaskImage </item>
+			<item> DrawImageBox </item>
+			<item> ImageWidth </item> 
+			<item> ImageHeight </item>
+			<item> Str </item> 
+			<item> Text </item> 
+			<item> Screen </item> 
+			<item> SetWindow </item> 
+			<item> ScreenWidth </item> 
+			<item> ScreenHeight </item> 
+			<item> OpenToRead </item> 
+			<item> OpenToWrite </item> 
+			<item> OpenToEdit </item> 
+			<item> ReadLine </item> 
+			<item> WriteLine </item> 
+			<item> Asc </item> 
+			<item> Chr </item> 
+			<item> Wait </item> 
+			<item> WriteByte </item> 
+			<item> WriteShort </item> 
+			<item> WriteInt </item> 
+			<item> WriteFloat </item> 
+			<item> ReadByte </item> 
+			<item> ReadShort </item> 
+			<item> ReadInt </item> 
+			<item> ReadFloat </item> 
+			<item> EOF </item> 
+			<item> First </item> 
+			<item> Last </item> 
+			<item> Insert </item> 
+			<item> Before </item> 
+			<item> After </item> 
+			<item> Len </item> 
+			<item> Instr </item> 
+			<item> Replace </item> 
+			<item> Trim </item> 
+			<item> StrRemove </item> 
+			<item> StrInsert </item> 
+			<item> Mid </item> 
+			<item> Print </item> 
+			<item> Write </item> 
+			<item> Text </item> 
+			<item> AddText </item> 
+			<item> CenterText </item> 
+			<item> VerticalText </item> 
+			<item> Cos </item> 
+			<item> Sin </item> 
+			<item> Tan </item> 
+			<item> ATan </item> 
+			<item> ACos </item> 
+			<item> ASin </item> 
+			<item> Sqrt </item> 
+			<item> Log </item> 
+			<item> Log10 </item> 
+			<item> WrapAngle </item> 
+			<item> Circle </item> 
+			<item> Dot </item> 
+			<item> Ellipse </item> 
+			<item> Box </item> 
+			<item> Line </item> 
+			<item> WaitKey </item> 
+			<item> CountWords </item> 
+			<item> GetWord </item> 
+			<item> Timer </item> 
+			<item> RoundUp </item> 
+			<item> RoundDown </item> 
+			<item> Min </item> 
+			<item> Max </item> 
+			<item> Rand </item> 
+			<item> Randomize </item> 
+			<item> Rnd </item> 
+			<item> Fps </item> 
+			<item> Abs </item> 
+			<item> ShowMouse </item> 
+			<item> MouseX </item> 
+			<item> MouseY </item> 
+			<item> MouseZ </item> 
+			<item> MouseMoveX </item> 
+			<item> MouseMoveY </item> 
+			<item> Distance </item> 
+			<item> ResetTransform </item> 
+			<item> TranslateTransform </item> 
+			<item> ScaleTransform </item> 
+			<item> RotateTransform </item> 
+			<item> BuildTransform </item> 
+			<item> PushTransform </item> 
+			<item> PopTransform </item> 
+			<item> InvertTransform </item> 
+			<item> TransformedX </item> 
+			<item> TransformedY </item> 
+		</list>
+		<list name="predefined constants">
+			<item> True </item>
+			<item> False </item>
+			<item> ON </item>
+			<item> OFF </item>
+			<item> Null </item>
+			<item> MaxFloat </item>
+			<item> PI </item>
+		</list>
+        <contexts>
+			<context attribute="Normal Text" lineEndContext="#stay" name="Normal">
+				<RegExpr attribute="Keyword" context="#stay" String="\bWhile\b" insensitive="true" beginRegion="WhileRegion"/>
+				<RegExpr attribute="Keyword" context="#stay" String="\bWend\b" insensitive="true" endRegion="WhileRegion"/>
+				
+				<RegExpr attribute="Keyword" context="#stay" String="\s*\bSelect\b" insensitive="true" beginRegion="SelectRegion"/>
+				<RegExpr attribute="Keyword" context="#stay" String="\bEnd\s*Select\b" insensitive="true" endRegion="SelectRegion"/>
+
+				<RegExpr attribute="Keyword" context="#stay" String="\bRepeat\b" insensitive="true" beginRegion="RepeatRegion"/>
+				<RegExpr attribute="Keyword" context="#stay" String="\bForever\b" insensitive="true" endRegion="RepeatRegion"/>
+				<RegExpr attribute="Keyword" context="#stay" String="\bUntil\b" insensitive="true" endRegion="RepeatRegion"/>
+				
+				<RegExpr attribute="Keyword" context="#stay" String="\bFor\b" insensitive="true" beginRegion="ForRegion"/>
+				<RegExpr attribute="Keyword" context="#stay" String="\bNext\b" insensitive="true" endRegion="ForRegion"/>
+
+				<!-- Function can be also a function pointer type-->
+				<RegExpr attribute="Keyword" context="#stay" String="^\s*\bFunction\b" insensitive="true" beginRegion="FunctionRegion"/>
+				<RegExpr attribute="Keyword" context="#stay" String="\bEnd\s*Function\b" insensitive="true" endRegion="FunctionRegion"/>
+        
+		        <RegExpr attribute="Keyword" context="#stay" String="\bType\b" insensitive="true" beginRegion="TypeRegion"/>
+				<RegExpr attribute="Keyword" context="#stay" String="\bEnd\s*Type\b" insensitive="true" endRegion="TypeRegion"/>
+
+				<RegExpr attribute="Keyword" context="#stay" String="\bStruct\b" insensitive="true" beginRegion="StructRegion"/>
+				<RegExpr attribute="Keyword" context="#stay" String="\bEnd\s*Struct\b" insensitive="true" endRegion="StructRegion"/>
+
+			
+				<RegExpr attribute="Keyword" context="#stay" String="\bIf\b.*\b(Then)\b\s*$" insensitive="true" beginRegion="IfRegion"/>
+				<RegExpr attribute="Keyword" context="#stay" String="\bEnd\s*If\b" insensitive="true" endRegion="IfRegion"/>
+						
+				<keyword attribute="Keyword" context="#stay" String="keywords"/>
+				<keyword attribute="Function" context="#stay" String="functions"/>
+				<keyword attribute="PredefinedConstant" context="#stay" String="predefined constants"/>
+				<keyword attribute="Identifier" context="#stay" String="types"/>
+				<!--<Float attribute="FloatLiteral" context="#stay"/>
+				<Int attribute="IntegerLiteral" context="#stay"/>-->
+				
+				<RegExpr attribute="NumberLiteral" context="#stay" String="\b([0-9]*\.?[0-9]+)\b"/>
+				<RegExpr attribute="HexLiteral" context="#stay" String="\b(\$[a-fA-f0-9]+)\b"/>
+				
+				<DetectChar attribute="String" context="String" char="&quot;"/>
+				<DetectChar attribute="Comment" context="Comment" char="'"/>
+				<RangeDetect attribute="Comment" context="Comment" char="/" char1="/"/>
+				<RegExpr attribute="Comment" context="Comment2" String="\b(Rem)\b" beginRegion="multilineComment"/>	
+			</context>
+        
+			<context name="Comment" attribute="Comment" lineEndContext="#pop"/>
+			<context name="Comment2" attribute="Comment" lineEndContext="#stay">
+				<RegExpr attribute="Comment" String="\b(EndRem)\b" context="#pop" endRegion="multilineComment"/>
+			</context>
+			<context name="String" attribute="String" lineEndContext="#pop">
+				<DetectChar attribute="String" context="#pop" char="&quot;"/>
+			</context>
+		
+        </contexts>
+        <itemDatas>
+			<itemData name="Normal Text" defStyleNum="dsNormal"/>
+			<itemData name="Keyword" defStyleNum="dsKeyword"/>
+			<itemData name="Function" defStyleNum="dsFunction"/>
+			<itemData name="Identifier" defStyleNum="dsDataType"/>
+			<itemData name="PredefinedConstant" defStyleNum="dsOthers"/>
+			<itemData name="NumberLiteral" defStyleNum="dsDecVal"/>
+			<itemData name="HexLiteral" defStyleName="dsBaseN">
+			<itemData name="Types" defStyleNum="dsDataType"/>
+			<itemData name="String" defStyleNum="dsString" spellChecking = "true"/>
+			<itemData name="Comment" defStyleNum="dsComment" spellChecking = "true"/>
+			<itemData name="Comment2" defStyleNum="dsComment" spellChecking = "true"/>
+        </itemDatas>
+  </highlighting>
+  <general>
+    <comments>
+      <comment name="singleLine" start="'" />
+	  <comment name="singleLine" start="//" />
+      <comment name="multiLine" start="Rem" end="EndRem" region="multilineComment"/>
+    </comments>
+    <keywords casesensitive="0" />
+  </general>
+</language>

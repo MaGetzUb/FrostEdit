@@ -1,0 +1,22 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>Icons/error.ico</file>
+        <file>Icons/frostedit.ico</file>
+        <file>Icons/function.ico</file>
+        <file>Icons/keyword.ico</file>
+        <file>Icons/toolb_build.ico</file>
+        <file>Icons/toolb_build_and_run.ico</file>
+        <file>Icons/toolb_close.ico</file>
+        <file>Icons/toolb_copy.ico</file>
+        <file>Icons/toolb_cut.ico</file>
+        <file>Icons/toolb_new.ico</file>
+        <file>Icons/toolb_open.ico</file>
+        <file>Icons/toolb_paste.ico</file>
+        <file>Icons/toolb_redo.ico</file>
+        <file>Icons/toolb_run.ico</file>
+        <file>Icons/toolb_save.ico</file>
+        <file>Icons/toolb_saveas.ico</file>
+        <file>Icons/toolb_undo.ico</file>
+        <file>Icons/warning.ico</file>
+    </qresource>
+</RCC>
