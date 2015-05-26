@@ -25,7 +25,7 @@
 #include "TextEditor/fatehighlighter.hpp"
 
 QString FrostEdit::gAppName = "FrostEdit";
-QString FrostEdit::gCompilerPath = "C:/Ohjelmointi/CBCompiler/bin/";
+QString FrostEdit::gCompilerPath = "D:\\Programming\\Projects\\CBCompiler\\bin\\";
 
 
 FrostEdit::FrostEdit(QWidget *parent) :
@@ -820,6 +820,8 @@ void FrostEdit::setUpDocumentHiltter(Document* doc) {
 	QSharedPointer<TextEditor::Internal::HighlightDefinition> ptr = mHiltDefManager->definition("Highlighters/frostbasic.xml");
 	if(!ptr.isNull())
 		hilt->setDefaultContext(ptr->initialContext());
+	else
+		Q_ASSERT("Default highlight definition loading failed" && 0);
 	doc->setHighlighter(hilt);
 }
 
@@ -872,7 +874,7 @@ void FrostEdit::compile() {
 	ui->actionCompileAndRun->setDisabled(true);
 
 	QProcessEnvironment procenv;
-	procenv.insert("PATH", QString("C:\\llvm-3.5-bin-mingw\\bin;C:\\Qt\\5.4\\mingw491_32\\bin;"));
+	//procenv.insert("PATH", QString("C:\\llvm-3.5-bin-mingw\\bin;C:\\Qt\\5.4\\mingw491_32\\bin;"));
 	mFrostCompiler->setProgram(gCompilerPath+"CBCompiler.exe");
 	mFrostCompiler->setArguments(QStringList() << file.absoluteFilePath());
 	mFrostCompiler->setWorkingDirectory(gCompilerPath);

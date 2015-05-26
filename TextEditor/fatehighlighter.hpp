@@ -12,7 +12,7 @@ namespace Fate {
 namespace Utils {
 
 	static inline bool isSpace(QChar c) {return c == ' ' || c == '\t';}
-	static inline bool isLetter(QChar c) {return c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z';}
+    static inline bool isLetter(QChar c) {return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');}
 	static inline bool isUnderScore(QChar c) {return c == '_';}
 	static inline bool isDigit(QChar c) {return c >= '0' && c <= '9';}
 	static inline bool isSeparator(QChar c) {
