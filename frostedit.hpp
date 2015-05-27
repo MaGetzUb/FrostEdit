@@ -15,6 +15,7 @@
 #include "tabwidgetframe.hpp"
 #include "console.hpp"
 #include "tabwidget.hpp"
+#include "documentitem.hpp"
 
 #include "TextEditor/qate/highlighter.h"
 #include "TextEditor/qate/highlightdefinition.h"
@@ -58,6 +59,7 @@ class FrostEdit : public QMainWindow {
 		QTabWidget* mApplicationOutput;
 		QFont mFont;
 		int mNewCount;
+		QString mCompiledFile;
 	public:
 		static QString gAppName;
 		explicit FrostEdit(QWidget *parent = 0);
@@ -76,7 +78,7 @@ class FrostEdit : public QMainWindow {
 		void removeDocument(Document*);
 
 		void addDocument(const QString&);
-		void addDocumentItem(const Document* doc);
+		void addDocumentItem(Document* doc);
 		void updateDocumentSelection(TabWidget*, int);
 		void changeTitle(TabWidget*, int);
 
@@ -120,6 +122,9 @@ class FrostEdit : public QMainWindow {
 		void compileFinished(int, QProcess::ExitStatus);
 		void on_actionCompileAndRun_triggered();
 		void applicationCloseRequest(int );
+
+		void pointIssueOut(QListWidgetItem*);
+		void interpretCompileOut(QString);
 
 	signals:
 		void tabWidgetChanged(TabWidget*);

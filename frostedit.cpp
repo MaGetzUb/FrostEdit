@@ -71,6 +71,7 @@ FrostEdit::FrostEdit(QWidget *parent) :
 
 	connect(mFrostCompiler, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(compileFinished(int, QProcess::ExitStatus)));
 
+
 	ui->browserWidget->setVisible(false);
 
 	setAcceptDrops(true);
@@ -106,15 +107,22 @@ FrostEdit::FrostEdit(QWidget *parent) :
 	mCompileOutput->setFont(mFont);
 	mCompileOutput->disconnectSignalsAfterFinishing(false);
 
+
 	mCompileOutput->hookToProcess(mFrostCompiler);
+	connect(mCompileOutput, SIGNAL(stdOutAdded(QString)), this, SLOT(interpretCompileOut(QString)));
+
 	mApplicationOutput = new QTabWidget(ui->ConsoleArea);
 	mApplicationOutput->setTabsClosable(true);
+
 	connect(mApplicationOutput, SIGNAL(tabCloseRequested(int)), this, SLOT(applicationCloseRequest(int)));
 
 	mIssueList = new IssueList(ui->ConsoleArea);
 	ui->consoleTabs->addTab(mIssueList, "Issues");
 	ui->consoleTabs->addTab(mCompileOutput, "Console");
 	ui->consoleTabs->addTab(mApplicationOutput, "Application");
+	connect(mIssueList, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(pointIssueOut(QListWidgetItem*)));
+
+
 
 	mCompileOutput->show();
 	mIssueList->show();
@@ -140,10 +148,12 @@ FrostEdit::~FrostEdit() {
 
 void FrostEdit::dropEvent(QDropEvent* e)  {
 	const QMimeData* data = e->mimeData();
-	for(QUrl u: data->urls()) {
-		QString i = u.path().mid(1);
-		addDocument(i);
-		addEditor(i);
+	if(data != nullptr) {
+		for(QUrl u: data->urls()) {
+			QString i = u.path().mid(1);
+			addDocument(i);
+			addEditor(i);
+		}
 	}
 }
 
@@ -181,7 +191,8 @@ void FrostEdit::on_actionOpen_triggered() {
 }
 
 void FrostEdit::addEditor(QListWidgetItem* item) {
-	Document* doc = mOpenDocuments[item->data(0).toString()];
+	DocumentItem* docitem = static_cast<DocumentItem*>(item);
+	Document* doc = docitem->getDocument();
 	for(int i = 0; i < mCurrentTabWidget->count(); i++) {
 		TextEdit* edit = toTextEdit(mCurrentTabWidget->widget(i));
 		if(toDocument(edit->document()) == doc) {
@@ -206,7 +217,17 @@ void FrostEdit::addEditor(const QString& path) {
 }
 
 void FrostEdit::addEditor(TabWidgetFrame* wid, const QString& str) {
-	Document* doc = mOpenDocuments[str];
+	Document* doc = nullptr ;
+	if(mOpenDocuments.contains(str) == false) {
+		if(QFileInfo(str).isFile()) {
+			addDocument(str);
+			doc = mOpenDocuments[str];
+		}
+	} else
+		doc = mOpenDocuments[str];
+
+
+
 	if(doc == nullptr)
 		return;
 
@@ -239,8 +260,14 @@ void FrostEdit::removeDocument(Document* doc) {
 
 	mOpenDocuments.remove(doc->getFullPath());
 	mDocumentWatcher->removePath(doc->getFullPath());
-	auto find = ui->openFilesWidget->findItems(doc->getFullPath(), 0);
-	delete find[0];
+	auto find = ui->openFilesWidget->findItems(doc->getFileName(), 0);
+	for(auto& i: find) {
+		DocumentItem* item = static_cast<DocumentItem*>(i);
+		if(item->getDocument() == doc)
+			delete item;
+	}
+
+
 	delete doc;
 }
 
@@ -253,7 +280,10 @@ void FrostEdit::on_actionSave_triggered() {
 		doc->save();
 		mDocumentWatcher->addPath(doc->getFullPath());
 	} else {
+		QString prevPath = doc->getFullPath();
 		on_actionSave_As_triggered();
+		if(mCompiledFile == prevPath)
+			mCompiledFile = doc->getFullPath();
 		return;
 	}
 	updateTabHeader(doc, doc->isModified());
@@ -329,7 +359,6 @@ void FrostEdit::closeTab(TabWidget* wid, int id) {
 	qDebug() << wid  <<  id;
 	TextEdit* e = toTextEdit(wid->widget(id));
 	Document* doc = toDocument(e->document());
-	QString filepath = doc->getFullPath();
 
 	int editors = openEditors(doc);
 	qDebug() << "Open in editors: " << editors;
@@ -391,7 +420,7 @@ void FrostEdit::currentTabPageChanged(int id) {
 
 void FrostEdit::addDocument(const QString& path) {
 
-	if(mOpenDocuments.find(path) != mOpenDocuments.end())
+	if(mOpenDocuments.contains(path))
 		return;
 
 	Document* doc = new Document(this, path);
@@ -410,11 +439,8 @@ void FrostEdit::addDocument(const QString& path) {
 
 }
 
-void FrostEdit::addDocumentItem(const Document* doc) {
-	QListWidgetItem* item = new QListWidgetItem();
-	item->setText(doc->isActualFile() ? doc->getFileInfo().fileName() : doc->getFileName());
-	item->setToolTip(doc->getFullPath());
-	item->setData(0, QVariant(doc->getFullPath()));
+void FrostEdit::addDocumentItem(Document* doc) {
+	DocumentItem* item = new DocumentItem(ui->openFilesWidget, doc);
 	ui->openFilesWidget->addItem(item);
 }
 
@@ -425,15 +451,17 @@ void FrostEdit::on_actionSave_As_triggered() {
 		Document* doc = toDocument(e->document());
 		mDocumentWatcher->removePath(doc->getFullPath());
 		auto list = ui->openFilesWidget->findItems(doc->getFileName(), Qt::MatchExactly);
-		QListWidgetItem* itemModify;
-		if(!list.isEmpty()) {
-			for(auto& item: list) {
-				if(item->data(0).toString() == doc->getFullPath()) {
-					itemModify = item;
-					break;
-				}
+
+		DocumentItem* docItem;
+		for(auto& i: list) {
+			DocumentItem* docy = static_cast<DocumentItem*>(i);
+			if(docy->getDocument() == doc) {
+				docItem = docy;
+				break;
 			}
 		}
+
+
 
 		for(TabWidgetFrame* tab: mTabWidgetFrames) {
 			tab->removeComboBoxItem(doc->getFullPath());
@@ -443,18 +471,15 @@ void FrostEdit::on_actionSave_As_triggered() {
 		doc->saveAs(file);
 		mDocumentWatcher->addPath(file);
 		updateTabHeader(doc, doc->isModified());
-		itemModify->setText(doc->getFileName());
-		itemModify->setToolTip(doc->getFullPath());
-		itemModify->setData(0, doc->getFullPath());
+		docItem->update();
 	}
 }
 
-void FrostEdit::on_closeDocument_clicked() {
-	QListWidgetItem* item = ui->openFilesWidget->currentItem();
-	QString file = item->data(0).toString();
-	delete item;
 
-	Document* doc = mOpenDocuments[file];
+//TODO: a document item.
+void FrostEdit::on_closeDocument_clicked() {
+	DocumentItem* item = static_cast<DocumentItem*>(ui->openFilesWidget->currentItem());
+	Document* doc = item->getDocument();
 	removeDocument(doc);
 }
 
@@ -528,10 +553,8 @@ void FrostEdit::on_actionNew_triggered() {
 
 
 	setUpDocumentHiltter(doc);
-
-	connect(doc, SIGNAL(textChanged(Document*,bool)), this, SLOT(updateTabHeader(Document*, bool)));
-
 	addDocumentItem(doc);
+	connect(doc, SIGNAL(textChanged(Document*,bool)), this, SLOT(updateTabHeader(Document*, bool)));
 
 	for(TabWidgetFrame* tab: mTabWidgetFrames) {
 		tab->addComboBoxItem(newfile);
@@ -549,7 +572,10 @@ void FrostEdit::split(TabWidgetFrame* tab, Qt::Orientation orient) {
 	qDebug()<<parentedit;
 
 	int size = (orient == Qt::Horizontal ? tab->width() : tab->height()) / 2;
-	if(parentedit != NULL && parentsplitter == NULL) {
+
+
+	//Currently the tabwidget frame's parently is the Editor itself
+	if(parentedit != nullptr && parentsplitter == nullptr) {
 		QSplitter* splitter(new QSplitter(orient));
 
 		qDebug() << centralWidget();
@@ -561,8 +587,8 @@ void FrostEdit::split(TabWidgetFrame* tab, Qt::Orientation orient) {
 
 		splitter->setSizes({size, size});
 		setCentralWidget(splitter);
-
-	} else if(parentsplitter != NULL && parentedit == NULL) {
+	//Parent widget seems to be splitter
+	} else if(parentsplitter != nullptr && parentedit == nullptr) {
 		QSplitter* splitter(new QSplitter(orient));
 		parentsplitter->addWidget(splitter);
 		splitter->addWidget(tab);
@@ -601,18 +627,18 @@ void FrostEdit::splitVertically(TabWidgetFrame* tab) {
 
 
 
-void FrostEdit::closeTabWidgetFrame(TabWidgetFrame* tab) {
-	QWidget* parent = tab->parentWidget();
+void FrostEdit::closeTabWidgetFrame(TabWidgetFrame* tabWidFrame) {
+	QWidget* parent = tabWidFrame->parentWidget();
 	QSplitter* parentsplitter = qobject_cast<QSplitter*>(parent);
-	if(tab->tabWidget() == mCurrentTabWidget) mCurrentTabWidget = nullptr;
+	if(tabWidFrame->tabWidget() == mCurrentTabWidget) mCurrentTabWidget = nullptr;
 	if(parentsplitter != NULL) {
 
-		for(int i = 0; i < tab->tabWidget()->count(); i++) {
-			closeTab(tab->tabWidget(), i);
+		for(int i = 0; i < tabWidFrame->tabWidget()->count(); i++) {
+			closeTab(tabWidFrame->tabWidget(), i);
 		}
-		int id = mTabWidgetFrames.indexOf(tab);
-		mTabWidgetFrames.remove(id);
-		delete tab;
+
+		mTabWidgetFrames.removeOne(tabWidFrame);
+		delete tabWidFrame;
 
 		if(!parentsplitter->count() > 1) {
 			FrostEdit* edit = qobject_cast<FrostEdit*>(parentsplitter->parentWidget());
@@ -712,12 +738,79 @@ void FrostEdit::on_actionCompileAndRun_triggered() {
 
 void FrostEdit::applicationCloseRequest(int id) {
 	Console* c = qobject_cast<Console*>(mApplicationOutput->widget(id));
-	c->closeProcess();
-	QProcess* proc = c->getProcess();
-	mRunningApplication.removeAt(mRunningApplication.indexOf(proc));
-	mApplicationOutput->removeTab(id);
-	delete proc;
-	delete c;
+	if(c != nullptr) {
+		QProcess* proc = c->getProcess();
+		if(proc != nullptr) {
+			if(proc->state() == QProcess::Running)
+				proc->close();
+			mRunningApplication.removeAt(mRunningApplication.indexOf(proc));
+			delete proc;
+		}
+		mApplicationOutput->removeTab(id);
+		delete c;
+	}
+}
+
+void FrostEdit::pointIssueOut(QListWidgetItem* item) {
+	IssueItem* issue = static_cast<IssueItem*>(item);
+	TabWidgetFrame* curTabFrameWidget = toTabWidgetFrame(mCurrentTabWidget->parentWidget());
+	TextEdit* edit = nullptr;
+
+	QString file = issue->getFile();
+	QFileInfo compiledFile(mCompiledFile);
+	QString path;
+	if(compiledFile.isFile()) {
+		path = compiledFile.path();
+	} else {
+		path = QDir::currentPath();
+	}
+
+	if(!QFileInfo(file).isFile()) {
+		file = path+"/"+file;
+	}
+
+	if(QFileInfo(file).isFile())
+		addDocument(file);
+	qDebug() << file;
+
+	if(mOpenDocuments.contains(file) == true) {
+		addEditor(curTabFrameWidget, file);
+		edit = toTextEdit(mCurrentTabWidget->currentWidget());
+	} else if(mOpenDocuments.contains(issue->getFile()) == false) {
+		addEditor(curTabFrameWidget, mCompiledFile);
+		edit = toTextEdit(mCurrentTabWidget->currentWidget());
+	} else {
+		addEditor(curTabFrameWidget, issue->getFile());
+		edit = toTextEdit(mCurrentTabWidget->currentWidget());
+	}
+	if(edit != nullptr)
+		edit->setCursorPosition(issue->getRow()-1, issue->getColumn()-1);
+}
+
+void FrostEdit::interpretCompileOut(QString line) {
+	//"C:/Ohjelmointi/FrostEditor/TestCodes/stars.frb" [141, 7] Warning 3: The variable name after "Next" is ignored
+
+	QRegularExpression expression("\\\"(.*)\\\"\\s+\\[\\s*(\\d+)\\,\\s*(\\d*)\\s*\\]\\s+(Warning|Error)\\s+(\\d+)\\:\\s+(.*)"); //\\s*(\\d+)\\:\\s*(.*)
+	auto match = expression.match(line);
+	while(match.hasMatch()) {
+		//qDebug() << "Match! " <<match.capturedTexts();
+		ui->consoleTabs->setCurrentIndex(0);
+		QStringList captures = match.capturedTexts();
+
+		QString wholeMsg = captures[0];
+		QString file = captures[1];
+		int row = captures[2].toInt();
+		int col = captures[3].toInt();
+		QString type = captures[4];
+		int code = captures[5].toInt();
+		QString explanation = captures[6];
+
+		if(type.toLower() == "warning")
+			mIssueList->addWarning(wholeMsg, file, explanation, row, col);
+		else if(type.toLower() == "error")
+			mIssueList->addError(wholeMsg, file, explanation, row, col);
+		match = expression.match(line, match.capturedEnd());
+	}
 }
 
 void FrostEdit::setUpDocumentHiltter(Document* doc) {
@@ -756,10 +849,16 @@ void FrostEdit::printCompile() {
 
 void FrostEdit::compile() {
 	ui->consoleTabs->setCurrentIndex(ui->consoleTabs->indexOf(mCompileOutput));
+	mCompileOutput->clear();
+	mIssueList->clear();
+
 	Document* doc = getActiveDocument();
 	if(doc == nullptr)
 		return;
 	QFileInfo file;
+
+
+	mCompiledFile = doc->getFullPath();
 	if(doc->isActualFile()) {
 		on_actionSave_triggered();
 		file = doc->getFileInfo();
