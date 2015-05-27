@@ -323,6 +323,8 @@ void FrostEdit::changeTitle(TabWidget* wid, int ind) {
 
 void FrostEdit::setActiveTabWidget(TabWidget* wid) {
 
+	if (!wid) return;
+
 	QWidget* curwid = wid->currentWidget();
 	TextEdit* e = toTextEdit(curwid);
 
