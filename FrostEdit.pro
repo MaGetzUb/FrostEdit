@@ -45,7 +45,11 @@ SOURCES += main.cpp\
     TextEditor/qate/tabsettings.cpp \
     TextEditor/fatehighlighter.cpp \
     documentitem.cpp \
-    settings.cpp
+    documentitem.cpp \
+    settings.cpp \
+    TextEditor/codemodel.cpp \
+    TextEditor/frostcodemodel.cpp \
+    TextEditor/frosttoken.cpp
 
 
 HEADERS  += \
@@ -87,7 +91,12 @@ HEADERS  += \
     TextEditor/fatedata.hpp \
     TextEditor/fatehighlighter.hpp \
     documentitem.hpp \
-    settings.hpp
+    settings.hpp \
+    TextEditor/codemodel.hpp \
+    TextEditor/codepoint.hpp \
+    TextEditor/frostcodemodel.hpp \
+    TextEditor/symbol.hpp \
+    TextEditor/frosttoken.hpp
 
 
 FORMS    += \
