@@ -25,8 +25,6 @@
 #include "TextEditor/fatehighlighter.hpp"
 
 QString FrostEdit::gAppName = "FrostEdit";
-QString FrostEdit::gCompilerPath = "D:\\Programming\\Projects\\CBCompiler\\bin\\";
-
 
 FrostEdit::FrostEdit(QWidget *parent) :
 	QMainWindow(parent),
@@ -40,6 +38,9 @@ FrostEdit::FrostEdit(QWidget *parent) :
 	mFont.setFixedPitch(true);
 	mFont.setPointSize(8);
 	mFont.setStyleHint(QFont::Monospace);
+
+
+
 
 
 	mDocumentWatcher = new QFileSystemWatcher(this);
@@ -126,6 +127,17 @@ FrostEdit::FrostEdit(QWidget *parent) :
 
 	mCompileOutput->show();
 	mIssueList->show();
+
+	if(!QFile::exists("FrostEdit.ini")) {
+		Settings::set("DefaultCompiler/Path", "");
+		Settings::set("DefaultCompiler/Environment", "");
+		Settings::set("TextEditor/Font", "Lucida Console");
+		Settings::set("TextEditor/FontSize", 10);
+		Settings::sync();
+	}
+
+	updateSettings();
+
 }
 
 FrostEdit::~FrostEdit() {
@@ -180,6 +192,12 @@ void FrostEdit::updateTabHeader(Document* doc, bool b) {
 			}
 		}
 	}
+}
+
+void FrostEdit::updateSettings() {
+	mFont.setFamily(Settings::get("TextEditor/Font", "Lucida Console").toString());
+	mFont.setPointSize(Settings::get("TextEditor/FontSize", 10).toInt());
+	Settings::instance().sync();
 }
 
 void FrostEdit::on_actionOpen_triggered() {
@@ -476,7 +494,7 @@ void FrostEdit::on_actionSave_As_triggered() {
 }
 
 
-//TODO: a document item.
+
 void FrostEdit::on_closeDocument_clicked() {
 	DocumentItem* item = static_cast<DocumentItem*>(ui->openFilesWidget->currentItem());
 	Document* doc = item->getDocument();
@@ -783,8 +801,11 @@ void FrostEdit::pointIssueOut(QListWidgetItem* item) {
 		addEditor(curTabFrameWidget, issue->getFile());
 		edit = toTextEdit(mCurrentTabWidget->currentWidget());
 	}
-	if(edit != nullptr)
+	if(edit != nullptr) {
 		edit->setCursorPosition(issue->getRow()-1, issue->getColumn()-1);
+		edit->ensureCursorVisible();
+		edit->setFocus();
+	}
 }
 
 void FrostEdit::interpretCompileOut(QString line) {
@@ -874,10 +895,14 @@ void FrostEdit::compile() {
 	ui->actionCompileAndRun->setDisabled(true);
 
 	QProcessEnvironment procenv;
-	//procenv.insert("PATH", QString("C:\\llvm-3.5-bin-mingw\\bin;C:\\Qt\\5.4\\mingw491_32\\bin;"));
-	mFrostCompiler->setProgram(gCompilerPath+"CBCompiler.exe");
+	QString env = Settings::getDefaultCompilerEnvironment();
+	if(!env.isEmpty())
+		procenv.insert("PATH", env);
+
+	QString defaultCompilerPath = Settings::getDefaultCompilerPath();
+	mFrostCompiler->setProgram(defaultCompilerPath+"CBCompiler.exe");
 	mFrostCompiler->setArguments(QStringList() << file.absoluteFilePath());
-	mFrostCompiler->setWorkingDirectory(gCompilerPath);
+	mFrostCompiler->setWorkingDirectory(defaultCompilerPath);
 	mFrostCompiler->setProcessEnvironment(procenv);
 	mFrostCompiler->setProcessChannelMode(QProcess::SeparateChannels);
 	mFrostCompiler->start(QProcess::ReadOnly);
@@ -897,21 +922,7 @@ void FrostEdit::compileFinished(int output, QProcess::ExitStatus status) {
 	/* Are we running the code too? */
 	if(mRunToo == true) {
 		if(output == 0 && status == QProcess::NormalExit) {
-			mRunningApplication.append(new QProcess(this));
-			mRunningApplication.last()->setWorkingDirectory(mCompileFile.absolutePath());
-			mRunningApplication.last()->setProcessChannelMode(QProcess::SeparateChannels);
-			//mRunningApplication.last()->setProgram(gCompilerPath+"cbrun.exe");
-			//mRunningApplication.last()->setProgram("cmd");
-			Console* console = new Console(this);
-			console->setFont(mFont);
-			mApplicationOutput->addTab(console, "cbrun.exe");
-
-			mRunningApplication.last()->start(gCompilerPath+"cbrun.exe", QProcess::ReadWrite);
-
-			console->hookToProcess(mRunningApplication.last());
-
-			ui->consoleTabs->setCurrentIndex(ui->consoleTabs->indexOf(mApplicationOutput));
-			mApplicationOutput->setCurrentIndex(mApplicationOutput->indexOf(console));
+			on_actionRun_triggered();
 		}
 		mRunToo = false;
 	}
@@ -938,3 +949,23 @@ FrostDialog* FrostEdit::toFrostDialog(QWidget* wid) {
 }
 
 
+void FrostEdit::on_actionRun_triggered() {
+	QString defaultCompilerPath = Settings::getDefaultCompilerPath();
+
+	mRunningApplication.append(new QProcess(this));
+	mRunningApplication.last()->setWorkingDirectory(mCompileFile.absolutePath());
+	mRunningApplication.last()->setProcessChannelMode(QProcess::SeparateChannels);
+	//mRunningApplication.last()->setProgram(gCompilerPath+"cbrun.exe");
+	//mRunningApplication.last()->setProgram("cmd");
+	Console* console = new Console(this);
+	console->setFont(mFont);
+	mApplicationOutput->addTab(console, "cbrun.exe");
+
+	mRunningApplication.last()->start(defaultCompilerPath+"cbrun.exe", QProcess::ReadWrite);
+
+	console->hookToProcess(mRunningApplication.last());
+
+	ui->consoleTabs->setCurrentIndex(ui->consoleTabs->indexOf(mApplicationOutput));
+	mApplicationOutput->setCurrentIndex(mApplicationOutput->indexOf(console));
+
+}

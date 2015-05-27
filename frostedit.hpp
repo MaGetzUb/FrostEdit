@@ -10,7 +10,9 @@
 #include <QListWidgetItem>
 #include <QSplitter>
 #include <QProcess>
+#include <QSettings>
 
+#include "settings.hpp"
 #include "TextEditor/document.hpp"
 #include "tabwidgetframe.hpp"
 #include "console.hpp"
@@ -22,6 +24,9 @@
 #include "TextEditor/qate/highlightersettings.h"
 #include "TextEditor/qate/mimedatabase.h"
 #include "TextEditor/qate/highlightdefinitionmanager.h"
+
+
+
 
 namespace Ui {
 	class FrostEdit;
@@ -47,9 +52,9 @@ class FrostEdit : public QMainWindow {
 		TextEditor::Internal::Highlighter *mHighlighter;
 		QSharedPointer<TextEditor::Internal::HighlightDefinition> mHiltDef;
 
-		static QString gCompilerPath;
 
 		QFileInfo mCompileFile;
+
 
 		QProcess* mFrostCompiler;
 		QList<QProcess*> mRunningApplication;
@@ -70,6 +75,8 @@ class FrostEdit : public QMainWindow {
 		void fileChangedOutside(QString);
 		void updateTabHeader(Document*, bool);
 	private slots:
+
+		void updateSettings();
 
 		void addEditor(QListWidgetItem*);
 		void addEditor(const QString&);
@@ -125,6 +132,8 @@ class FrostEdit : public QMainWindow {
 
 		void pointIssueOut(QListWidgetItem*);
 		void interpretCompileOut(QString);
+
+		void on_actionRun_triggered();
 
 	signals:
 		void tabWidgetChanged(TabWidget*);

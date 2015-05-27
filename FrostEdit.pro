@@ -44,7 +44,8 @@ SOURCES += main.cpp\
     settingsmenu.cpp \
     TextEditor/qate/tabsettings.cpp \
     TextEditor/fatehighlighter.cpp \
-    documentitem.cpp
+    documentitem.cpp \
+    settings.cpp
 
 
 HEADERS  += \
@@ -85,7 +86,8 @@ HEADERS  += \
     fatedata.hpp \
     TextEditor/fatedata.hpp \
     TextEditor/fatehighlighter.hpp \
-    documentitem.hpp
+    documentitem.hpp \
+    settings.hpp
 
 
 FORMS    += \

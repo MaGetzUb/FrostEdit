@@ -223,6 +223,7 @@
    <addaction name="separator"/>
    <addaction name="actionCompile"/>
    <addaction name="actionCompileAndRun"/>
+   <addaction name="actionRun"/>
   </widget>
   <widget class="QDockWidget" name="browserWidget">
    <property name="sizePolicy">
@@ -477,7 +478,7 @@
     <string>Compile</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Shift+C</string>
+    <string>F4</string>
    </property>
   </action>
   <action name="actionCompileAndRun">
@@ -490,6 +491,9 @@
    </property>
    <property name="toolTip">
     <string>Compile and run</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
    </property>
   </action>
   <action name="actionConsole">
@@ -506,6 +510,21 @@
    </property>
    <property name="text">
     <string>Browser</string>
+   </property>
+  </action>
+  <action name="actionRun">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/icons/Icons/toolb_run.ico</normaloff>:/icons/Icons/toolb_run.ico</iconset>
+   </property>
+   <property name="text">
+    <string>Run</string>
+   </property>
+   <property name="toolTip">
+    <string>Run already compiled application.</string>
+   </property>
+   <property name="shortcut">
+    <string>F7</string>
    </property>
   </action>
  </widget>

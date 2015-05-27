@@ -336,10 +336,10 @@ void TextEdit::setBlocksVisible(QList<QTextBlock>& blocks, bool visible) {
 	}
 	viewport()->update();
 
-
 	emit layout->requestUpdate();
 	emit layout->documentSizeChanged(document()->size());
 
+	QAbstractScrollArea::update();
 	updateGeometry();
 }
 
