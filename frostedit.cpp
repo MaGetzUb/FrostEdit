@@ -387,19 +387,28 @@ void FrostEdit::closeTab(TabWidget* wid, int id) {
 		}
 	}
 
+
 	wid->removeTab(id);
 	delete e;
-	removeDocument(doc);
+
+	if(editors == 1)
+		removeDocument(doc);
 
 
 }
 
 void FrostEdit::currentTabPageChanged(int id) {
-	TextEdit* e = toTextEdit(mCurrentTabWidget->widget(id));
+	if(id == -1)
+		goto disableAll;
+	QWidget* wid = mCurrentTabWidget->widget(id);
+	if(wid == nullptr)
+		goto disableAll;
+	TextEdit* e = toTextEdit(wid);
 	if(e != nullptr &&  e->document() != getActiveDocument())
 		emit documentChanged(toDocument(e->document()));
 
 	if(e == nullptr) {
+		disableAll:
 		ui->actionCopy->setDisabled(true);
 		ui->actionCut->setDisabled(true);
 		ui->actionPaste->setDisabled(true);
@@ -613,10 +622,11 @@ void FrostEdit::closeTabWidgetFrame(TabWidgetFrame* tabWidFrame) {
 		}
 
 		int index = mTabWidgetFrames.indexOf(tabWidFrame);
+		mTabWidgetFrames.first()->tabWidget()->setActive(true);
 		mTabWidgetFrames.remove(index);
 		delete tabWidFrame;
 
-		mTabWidgetFrames[index-1]->tabWidget()->setActive(true);
+
 
 		if(!parentsplitter->count() > 1) {
 			FrostEdit* edit = qobject_cast<FrostEdit*>(parentsplitter->parentWidget());
