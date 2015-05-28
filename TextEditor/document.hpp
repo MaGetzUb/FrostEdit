@@ -14,7 +14,8 @@
 #include "fatedata.hpp"
 
 
-
+class FrostEdit;
+class DocumentItem;
 class Document : public QTextDocument {
 	Q_OBJECT
 	friend class Fate::FateHighlighter;
@@ -24,12 +25,12 @@ class Document : public QTextDocument {
 	QTimer mSafeCopyTimer;
 	TextEditor::Internal::Highlighter* mHighlighter;
 	TextEditor::TabSettings mTabSettings;
-
+	DocumentItem* mItem;
 
 	public:
 
 
-		Document(QObject* parent = 0, const QString file = "");
+		Document(QObject* parent = 0, const QString file = "", DocumentItem* item = 0);
 		~Document();
 
 
@@ -40,6 +41,8 @@ class Document : public QTextDocument {
 		const QString getDynamicName() const;
 
 		void clearIdentifiers();
+		void setItem(DocumentItem*);
+		DocumentItem* getItem() const;
 
 		bool isActualFile() const;
 		void setFile(const QString& file);
@@ -49,7 +52,9 @@ class Document : public QTextDocument {
 		const TextEditor::TabSettings& getTabSettings() const;
 		TextEditor::Internal::Highlighter* getHighlighter() const;
 
-		void clearRowData(int);
+
+		FrostEdit* getEditor() const;
+
 
 	public slots:
 

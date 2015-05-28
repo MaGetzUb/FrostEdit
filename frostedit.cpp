@@ -279,13 +279,6 @@ void FrostEdit::removeDocument(Document* doc) {
 	mOpenDocuments.remove(doc->getFullPath());
 	mDocumentWatcher->removePath(doc->getFullPath());
 	auto find = ui->openFilesWidget->findItems(doc->getFileName(), 0);
-	for(auto& i: find) {
-		DocumentItem* item = static_cast<DocumentItem*>(i);
-		if(item->getDocument() == doc)
-			delete item;
-	}
-
-
 	delete doc;
 }
 
@@ -319,16 +312,7 @@ void FrostEdit::updateDocumentSelection(TabWidget* wid, int sel) {
 	Document* doc = toDocument(e->document());
 	TabWidgetFrame* parentWidget = toTabWidgetFrame(wid->parentWidget());
 	parentWidget->setCurrentItem(doc->getFullPath());
-
-	auto items = ui->openFilesWidget->findItems(doc->getFileName(), Qt::MatchExactly);
-	if(!items.isEmpty()) {
-		for(auto& item: items) {
-			if(item->data(0).toString() == doc->getFullPath()) {
-				item->setSelected(true);
-				break;
-			}
-		}
-	}
+	doc->getItem()->setSelected(true);
 
 }
 
@@ -462,6 +446,7 @@ void FrostEdit::addDocument(const QString& path) {
 void FrostEdit::addDocumentItem(Document* doc) {
 	DocumentItem* item = new DocumentItem(ui->openFilesWidget, doc);
 	ui->openFilesWidget->addItem(item);
+	doc->setItem(item);
 }
 
 void FrostEdit::on_actionSave_As_triggered() {
@@ -470,18 +455,6 @@ void FrostEdit::on_actionSave_As_triggered() {
 		TextEdit* e = toTextEdit(mCurrentTabWidget->currentWidget());
 		Document* doc = toDocument(e->document());
 		mDocumentWatcher->removePath(doc->getFullPath());
-		auto list = ui->openFilesWidget->findItems(doc->getFileName(), Qt::MatchExactly);
-
-		DocumentItem* docItem;
-		for(auto& i: list) {
-			DocumentItem* docy = static_cast<DocumentItem*>(i);
-			if(docy->getDocument() == doc) {
-				docItem = docy;
-				break;
-			}
-		}
-
-
 
 		for(TabWidgetFrame* tab: mTabWidgetFrames) {
 			tab->removeComboBoxItem(doc->getFullPath());
@@ -491,7 +464,7 @@ void FrostEdit::on_actionSave_As_triggered() {
 		doc->saveAs(file);
 		mDocumentWatcher->addPath(file);
 		updateTabHeader(doc, doc->isModified());
-		docItem->update();
+		doc->getItem()->update();
 	}
 }
 
@@ -516,32 +489,14 @@ void FrostEdit::widgetChanged(QWidget* old, QWidget* now) {
 	//Was TabBar
 	if(bar != nullptr && tabwid == nullptr && wid == nullptr) {
 		tabwid = qobject_cast<TabWidget*>(bar->parentWidget());
-		if(mCurrentTabWidget != tabwid) {
-			emit tabWidgetChanged(tabwid);
-			if(mCurrentTabWidget != nullptr) mCurrentTabWidget->setActive(false);
-		}
-		mCurrentTabWidget = tabwid;
-		mCurrentTabWidget->setActive(true);
+		updateTabWidget(tabwid);
 
-	//Was TextEdit
 	} else if(wid != nullptr && tabwid == nullptr && bar == nullptr) {
 		tabwid = qobject_cast<TabWidget*>(wid->getParentWidget());
-		qDebug() << wid;
-		if(mCurrentTabWidget != tabwid) {
-			emit tabWidgetChanged(tabwid);
-			if(mCurrentTabWidget != nullptr) mCurrentTabWidget->setActive(false);
-		}
-		mCurrentTabWidget = tabwid;
-		mCurrentTabWidget->setActive(true);
+		updateTabWidget(tabwid);
 
-	//Was TabWidget
 	} else if(tabwid != nullptr && bar == nullptr) {
-		if(mCurrentTabWidget != tabwid) {
-			emit tabWidgetChanged(tabwid);
-			if(mCurrentTabWidget != nullptr) mCurrentTabWidget->setActive(false);
-		}
-		mCurrentTabWidget = tabwid;
-		mCurrentTabWidget->setActive(true);
+		updateTabWidget(tabwid);
 	}
 
 	if(mCurrentTabWidget != nullptr) {
@@ -566,7 +521,7 @@ int FrostEdit::openEditors(Document* doc) {
 
 void FrostEdit::on_actionNew_triggered() {
 	QString newfile = tr("New<%1>").arg(mNewCount);
-	Document* doc = new Document();
+	Document* doc = new Document(this);
 	mOpenDocuments[newfile] = doc;
 	mOpenDocuments[newfile]->setFile(newfile);
 	mNewCount++;
@@ -657,8 +612,11 @@ void FrostEdit::closeTabWidgetFrame(TabWidgetFrame* tabWidFrame) {
 			closeTab(tabWidFrame->tabWidget(), i);
 		}
 
-		mTabWidgetFrames.removeOne(tabWidFrame);
+		int index = mTabWidgetFrames.indexOf(tabWidFrame);
+		mTabWidgetFrames.remove(index);
 		delete tabWidFrame;
+
+		mTabWidgetFrames[index-1]->tabWidget()->setActive(true);
 
 		if(!parentsplitter->count() > 1) {
 			FrostEdit* edit = qobject_cast<FrostEdit*>(parentsplitter->parentWidget());
@@ -948,6 +906,15 @@ TabWidgetFrame* FrostEdit::toTabWidgetFrame(QWidget* wid) {
 
 FrostDialog* FrostEdit::toFrostDialog(QWidget* wid) {
 	return qobject_cast<FrostDialog*>(wid);
+}
+
+void FrostEdit::updateTabWidget(TabWidget* tabwid) {
+	if(mCurrentTabWidget != tabwid && tabwid != nullptr) {
+		emit tabWidgetChanged(tabwid);
+		if(mCurrentTabWidget != nullptr) mCurrentTabWidget->setActive(false);
+		mCurrentTabWidget = tabwid;
+		mCurrentTabWidget->setActive(true);
+	}
 }
 
 

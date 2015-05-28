@@ -7,10 +7,14 @@
 #include <QDate>
 #include <QDir>
 
-Document::Document(QObject* parent, const QString file):
+#include "frostedit.hpp"
+#include "../documentitem.hpp"
+
+Document::Document(QObject* parent, const QString file, DocumentItem* item):
 	QTextDocument(parent),
 	mFile(file),
-	mHighlighter(nullptr)
+	mHighlighter(nullptr),
+	mItem(item)
 {
 	setDocumentLayout(new QPlainTextDocumentLayout(this));
 
@@ -32,6 +36,8 @@ Document::~Document() {
 	}
 	if(mHighlighter != nullptr)
 		delete mHighlighter;
+	if(mItem != nullptr)
+		delete mItem;
 }
 
 void Document::reload() {
@@ -155,6 +161,15 @@ const QString Document::getDynamicName() const {
 	}
 }
 
+void Document::setItem(DocumentItem* item) {
+	mItem = item;
+}
+
+DocumentItem*Document::getItem() const {
+	return mItem;
+}
+
+
 bool Document::isActualFile() const {
 	return mFileInfo.isFile();
 }
@@ -183,8 +198,14 @@ const TextEditor::TabSettings& Document::getTabSettings() const {
 	return mTabSettings;
 }
 
-TextEditor::Internal::Highlighter *Document::getHighlighter() const {
+TextEditor::Internal::Highlighter* Document::getHighlighter() const {
 	return mHighlighter;
+}
+
+
+FrostEdit* Document::getEditor() const {
+	QObject* parentobj = this->parent();
+	return qobject_cast<FrostEdit*>(parentobj);
 }
 
 

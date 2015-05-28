@@ -207,6 +207,7 @@ QTextBlock TextEdit::blockAt(const QPoint& pnt) {
 }
 
 void TextEdit::insertCompletion(const QString& completion) {
+	blockSignals(true);
 	if(mCompleter->widget() != this)
 		return;
 	QTextCursor tc = textCursor();
@@ -219,6 +220,7 @@ void TextEdit::insertCompletion(const QString& completion) {
 	tc.movePosition(QTextCursor::EndOfWord);
 	tc.insertText(completion.right(extra));
 	setTextCursor(tc);
+	blockSignals(false);
 }
 
 TextEdit::TextEdit(QWidget *parent):

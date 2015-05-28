@@ -145,6 +145,8 @@ class FrostEdit : public QMainWindow {
 		TabWidgetFrame* toTabWidgetFrame(QWidget*);
 		FrostDialog* toFrostDialog(QWidget*);
 
+		void updateTabWidget(TabWidget* tabwid);
+
 		Document* getActiveDocument();
 		Ui::FrostEdit *ui;
 		bool mRunToo;
