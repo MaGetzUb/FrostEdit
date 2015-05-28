@@ -183,10 +183,11 @@ void FrostEdit::fileChangedOutside(QString str) {
 }
 
 void FrostEdit::updateTabHeader(Document* doc, bool b) {
+	qDebug() << doc << "- document changed!";
 	for(TabWidgetFrame* tab: mTabWidgetFrames) {
 		for(int i = 0; i < tab->tabWidget()->count(); i++) {
 			TextEdit* edit = toTextEdit(tab->tabWidget()->widget(i));
-			if(edit->document() == doc) {
+			if(edit != nullptr && edit->document() == doc) {
 				tab->tabWidget()->setTabText(i, doc->getDynamicName());
 				changeTitle(tab->tabWidget(), i);
 			}
@@ -278,7 +279,7 @@ void FrostEdit::removeDocument(Document* doc) {
 
 	mOpenDocuments.remove(doc->getFullPath());
 	mDocumentWatcher->removePath(doc->getFullPath());
-	auto find = ui->openFilesWidget->findItems(doc->getFileName(), 0);
+	disconnect(doc, SIGNAL(textChanged(Document*,bool)), this, SLOT(updateTabHeader(Document*, bool)));
 	delete doc;
 }
 
@@ -295,7 +296,6 @@ void FrostEdit::on_actionSave_triggered() {
 		on_actionSave_As_triggered();
 		if(mCompiledFile == prevPath)
 			mCompiledFile = doc->getFullPath();
-		return;
 	}
 	updateTabHeader(doc, doc->isModified());
 }
@@ -369,7 +369,7 @@ void FrostEdit::closeTab(TabWidget* wid, int id) {
 
 	if(editors == 1) {
 		if(doc->isModified()) {
-			int msg = QMessageBox::warning(this, "Warning", "The file is modified, do you want to save the changes?", "Yes", "No", "Cancel");
+			int msg = QMessageBox::warning(this, "Warning", tr("The file %1 is modified, do you want to save the changes?").arg(doc->getFileName()), "Yes", "No", "Cancel");
 			switch(msg) {
 				case 0:
 					if(doc->getFileInfo().isFile()) {
@@ -438,7 +438,6 @@ void FrostEdit::addDocument(const QString& path) {
 
 	Document* doc = new Document(this, path);
 	mOpenDocuments.insert(path, doc);
-	connect(doc, SIGNAL(textChanged(Document*,bool)), this, SLOT(updateTabHeader(Document*, bool)));
 	setUpDocumentHiltter(doc);
 
 
@@ -450,6 +449,7 @@ void FrostEdit::addDocument(const QString& path) {
 		tab->addComboBoxItem(path);
 	}
 
+	connect(doc, SIGNAL(textChanged(Document*,bool)), this, SLOT(updateTabHeader(Document*, bool)));
 }
 
 void FrostEdit::addDocumentItem(Document* doc) {

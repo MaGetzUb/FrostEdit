@@ -28,6 +28,8 @@ Document::Document(QObject* parent, const QString file, DocumentItem* item):
 			in.close();
 		}
 	}
+
+	connect(this, SIGNAL(modificationChanged(bool)), this, SLOT(emitTextChanged(bool)));
 }
 
 Document::~Document() {
@@ -89,17 +91,17 @@ QFileInfo Document::saveTemporary() {
 	QString fileName = date.toString("dd MM yy")+" "+time.toString("hh mm ss zz")+".tmp";
 
 	if(mFileInfo.isFile())
-		fileName = mFileInfo.absolutePath() + " " + fileName;
+		fileName = mFileInfo.absolutePath() + "-" + fileName;
 	else {
 		QString tmpFile = mFile;
 		tmpFile.replace('<', "[").replace('>', "]");
-		fileName = cpath+"/"+tmpFile + " " + fileName;
+		fileName = cpath+"/"+tmpFile + "-" + fileName;
 	}
 	fileName.replace(" ", "_");
 
-	QDir dir(cpath+"/unsaved");
-	if(!dir.exists())
-		dir.mkdir(dir.path());
+	//QDir dir(cpath+"/unsaved/");
+	//if(!dir.exists())
+	//	dir.mkdir(dir.path());
 
 	QFile out(fileName);
 	if(out.open(QIODevice::WriteOnly | QIODevice::Text)) {
