@@ -229,7 +229,6 @@ TextEdit::TextEdit(QWidget *parent):
 	mClicked(false),
 	mIsBlockSelection(false)
 {
-	setDocument(qobject_cast<QTextDocument*>(new Document()));
 	setMouseTracking(true);
 	setLineWrapMode(QPlainTextEdit::NoWrap);
 
@@ -239,11 +238,10 @@ TextEdit::TextEdit(QWidget *parent):
 	connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateDocumentLength(int)));
 	connect(this, SIGNAL(updateRequest(QRect, int)), this, SLOT(updateLineNumberArea(const QRect &, int)));
 	connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(highlightCurrentLine()));
-	connect(this->verticalScrollBar(), SIGNAL(sliderMoved(int)), this, SLOT(debugSliderValue(int)));
-
 
 
 	mCompleter = new QCompleter(this);
+
 	mCompleterModel = new QStandardItemModel(mCompleter);
 	mCompleter->setModel(mCompleterModel);
 	mCompleter->setWidget(this);
@@ -251,7 +249,7 @@ TextEdit::TextEdit(QWidget *parent):
 	mCompleter->setCaseSensitivity(Qt::CaseInsensitive);
 
 	Document* doc = toDocument(document());
-	initCompleter();
+
 
 
 	mLineNumberBackgroundColor = QColor(Qt::lightGray);
@@ -265,16 +263,12 @@ TextEdit::TextEdit(QWidget* parent, Document* doc):
 	TextEdit(parent)
 {
 	setDocument(qobject_cast<QTextDocument*>(doc));
-	initCompleter();
 
 	mLineNumberWidget = new LineNumberArea(this);
 	mDocumentWatcher = new DocumentMap(this);
 	mDocumentWatcher->setVisible(false);
 
-	connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateDocumentLength(int)));
-	connect(this, SIGNAL(updateRequest(QRect, int)), this, SLOT(updateLineNumberArea(const QRect &, int)));
-	connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(highlightCurrentLine()));
-
+	initCompleter();
 }
 
 void TextEdit::lineNumberAreaMousePressEvent(QMouseEvent* e) {
@@ -728,7 +722,6 @@ TextEdit::~TextEdit()
 }
 
 void TextEdit::initCompleter() {
-	connect(mCompleter, SIGNAL(activated(QString)), this, SLOT(insertCompletion(QString)));
 	Document* doc = toDocument(document());
 
 	if(doc->hasHighlighter()) {
@@ -770,7 +763,7 @@ void TextEdit::initCompleter() {
 		}
 	}
 
-
+	connect(mCompleter, SIGNAL(activated(QString)), this, SLOT(insertCompletion(QString)));
 
 }
 
