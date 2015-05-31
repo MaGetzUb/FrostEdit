@@ -89,7 +89,7 @@ void FrostCodeModel::parse()
 
 QList<Symbol *> FrostCodeModel::codeComplete(int position) const
 {
-
+	return QList<Symbol*>();
 }
 
 void FrostCodeModel::documentEdited(int position, int charsRemoved, int charsAdded)

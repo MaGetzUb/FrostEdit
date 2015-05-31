@@ -32,8 +32,10 @@ FrostEdit::FrostEdit(QWidget *parent) :
 	mFont("Lucida Console"),
 	mNewCount(1),
 	mFrostCompiler(new QProcess(this)),
+	mFileIconProvider(),
 	mMimeDatabase(new Qate::MimeDatabase),
-	mHiltDefManager(Qate::HighlightDefinitionManager::instance())
+	mHiltDefManager(Qate::HighlightDefinitionManager::instance()),
+	mFrostCompilerErrorRegEx("\\\"(.*)\\\"\\s+\\[\\s*(\\d+)\\,\\s*(\\d*)\\s*\\]\\s+(Warning|Error)\\s+(\\d+)\\:\\s+(.*)")
 {
 	mFont.setFixedPitch(true);
 	mFont.setPointSize(8);
@@ -121,14 +123,14 @@ FrostEdit::FrostEdit(QWidget *parent) :
 	ui->consoleTabs->addTab(mIssueList, "Issues");
 	ui->consoleTabs->addTab(mCompileOutput, "Console");
 	ui->consoleTabs->addTab(mApplicationOutput, "Application");
-	connect(mIssueList, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(pointIssueOut(QListWidgetItem*)));
+	connect(mIssueList, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(pointToIssue(QListWidgetItem*)));
 
 
 
 	mCompileOutput->show();
 	mIssueList->show();
 
-	if(!QFile::exists("FrostEdit.ini")) {
+	if(Settings::firstTime()) {
 		Settings::set("DefaultCompiler/Path", "");
 		Settings::set("DefaultCompiler/Environment", "");
 		Settings::set("TextEditor/Font", "Lucida Console");
@@ -142,8 +144,8 @@ FrostEdit::FrostEdit(QWidget *parent) :
 
 FrostEdit::~FrostEdit() {
 	for(QMap<QString, Document*>::iterator i = mOpenDocuments.begin(); i != mOpenDocuments.end(); i++) {
+		delete mOpenDocuments[i.key()];
 		mDocumentWatcher->removePath(i.key());
-		delete i.value();
 	}
 	mOpenDocuments.clear();
 
@@ -183,7 +185,6 @@ void FrostEdit::fileChangedOutside(QString str) {
 }
 
 void FrostEdit::updateTabHeader(Document* doc, bool b) {
-	qDebug() << doc << "- document changed!";
 	for(TabWidgetFrame* tab: mTabWidgetFrames) {
 		for(int i = 0; i < tab->tabWidget()->count(); i++) {
 			TextEdit* edit = toTextEdit(tab->tabWidget()->widget(i));
@@ -227,36 +228,27 @@ void FrostEdit::addEditor(QListWidgetItem* item) {
 }
 
 void FrostEdit::addEditor(const QString& path) {
+	Document* doc = mOpenDocuments[path];
+
 	for(TabWidgetFrame* tabwidget: mTabWidgetFrames) {
-		Document* doc = mOpenDocuments[path];
-		TextEdit* edit = new TextEdit(tabwidget->tabWidget(), doc);
-		edit->setFont(mFont);
-		tabwidget->tabWidget()->addTab(edit, doc->getDynamicName());
+		//TextEdit* edit = new TextEdit(tabwidget->tabWidget(), doc);
+		//edit->setFont(mFont);
+		//tabwidget->tabWidget()->addTab(edit, doc->getDynamicName());
+		addEditor(tabwidget, path);
 	}
+
 }
 
 void FrostEdit::addEditor(TabWidgetFrame* wid, const QString& str) {
-	Document* doc = nullptr ;
-	if(mOpenDocuments.contains(str) == false) {
-		if(QFileInfo(str).isFile()) {
-			addDocument(str);
-			doc = mOpenDocuments[str];
-		}
-	} else
-		doc = mOpenDocuments[str];
-
-
+	Document* doc = addDocument(str);
 
 	if(doc == nullptr)
 		return;
 
-	for(int i = 0; i < wid->tabWidget()->count(); i++) {
-		TextEdit* edit = toTextEdit(wid->tabWidget()->widget(i));
-		if(edit != nullptr)
-			if(toDocument(edit->document()) == doc) {
-				wid->tabWidget()->setCurrentIndex(i);
-				return;
-			}
+	int index = tabWidgetContains(wid->tabWidget(), doc);
+	if(index >= 0) {
+		wid->tabWidget()->setCurrentIndex(index);
+		return;
 	}
 
 	TextEdit* edit = new TextEdit(wid->tabWidget(), doc);
@@ -266,6 +258,7 @@ void FrostEdit::addEditor(TabWidgetFrame* wid, const QString& str) {
 }
 
 void FrostEdit::removeDocument(Document* doc) {
+
 	for(TabWidgetFrame* tab: mTabWidgetFrames) {
 		tab->removeComboBoxItem(doc->getFullPath());
 		for(int i = 0; i < tab->tabWidget()->count(); i++) {
@@ -276,11 +269,12 @@ void FrostEdit::removeDocument(Document* doc) {
 			}
 		}
 	}
-
+	qDebug() << "Removing "<<doc->getFullPath();
 	mOpenDocuments.remove(doc->getFullPath());
 	mDocumentWatcher->removePath(doc->getFullPath());
 	disconnect(doc, SIGNAL(textChanged(Document*,bool)), this, SLOT(updateTabHeader(Document*, bool)));
 	delete doc;
+	doc = nullptr;
 }
 
 
@@ -406,7 +400,7 @@ void FrostEdit::currentTabPageChanged(int id) {
 	TextEdit* e = toTextEdit(wid);
 	if(e != nullptr &&  e->document() != getActiveDocument())
 		emit documentChanged(toDocument(e->document()));
-
+	//if there's no editor, let's disable some buttons.
 	if(e == nullptr) {
 		disableAll:
 		ui->actionCopy->setDisabled(true);
@@ -418,7 +412,7 @@ void FrostEdit::currentTabPageChanged(int id) {
 		ui->actionCompileAndRun->setDisabled(true);
 		ui->actionSave->setDisabled(true);
 		ui->actionSave_As->setDisabled(true);
-	} else {
+	} else { //there was editor, enable them
 		ui->actionCopy->setEnabled(true);
 		ui->actionCut->setEnabled(true);
 		ui->actionPaste->setEnabled(true);
@@ -431,29 +425,54 @@ void FrostEdit::currentTabPageChanged(int id) {
 	}
 }
 
-void FrostEdit::addDocument(const QString& path) {
-
-	if(mOpenDocuments.contains(path))
-		return;
-
-	Document* doc = new Document(this, path);
-	mOpenDocuments.insert(path, doc);
-	setUpDocumentHiltter(doc);
-
-
-	addDocumentItem(doc);
-
-	mDocumentWatcher->addPath(path);
-
-	for(TabWidgetFrame* tab: mTabWidgetFrames) {
-		tab->addComboBoxItem(path);
+Document* FrostEdit::addDocument(const QString& path, bool ghost) {
+	//If path exists in the open documents, we will return the pointer from list
+	QFileInfo tmpInfo(path);
+	QString loadPath = path;
+	if(tmpInfo.exists() && tmpInfo.isFile()) {
+		loadPath = tmpInfo.absoluteFilePath();
+	} else
+		return nullptr;
+	if(mOpenDocuments.contains(loadPath)) {
+		Document* doc = mOpenDocuments[loadPath];
+		return doc;
 	}
 
+	//If file didn't exists and the path isn't file at all (and it's not ghost), we will make a MessageBox.
+	if(!QFile::exists(loadPath)) {
+		if(ghost == false)
+			QMessageBox::critical(this, "ERROR!", tr("File: %1 does not exists!").arg(loadPath), "OK");
+		return nullptr;
+	}
+
+	//We make a new file..
+	Document* doc = new Document(this, loadPath);
+	mOpenDocuments.insert(path, doc);
+	//Setting up a highlighter for it..
+	setUpDocumentHiltter(doc);
+
+	//If file isn't ghost we'll ad it into a open documents list
+	if(ghost == false)
+		addDocumentItem(doc);
+
+	//Let's keep eye on the file, to get notifications if the file was modified outside of the editor
+	mDocumentWatcher->addPath(path);
+
+	//Let's add the file in every TabWidgetFrames' comboboxes..
+	for(TabWidgetFrame* tab: mTabWidgetFrames) {
+		tab->addComboBoxItem(loadPath);
+	}
+
+	//Let's connect the textChanged signal to update tab header...
 	connect(doc, SIGNAL(textChanged(Document*,bool)), this, SLOT(updateTabHeader(Document*, bool)));
+
+	//We're done here.
+	return doc;
 }
 
 void FrostEdit::addDocumentItem(Document* doc) {
 	DocumentItem* item = new DocumentItem(ui->openFilesWidget, doc);
+	item->setIcon(mFileIconProvider.icon(doc->getFileInfo()));
 	ui->openFilesWidget->addItem(item);
 	doc->setItem(item);
 }
@@ -739,50 +758,36 @@ void FrostEdit::applicationCloseRequest(int id) {
 	}
 }
 
-void FrostEdit::pointIssueOut(QListWidgetItem* item) {
+void FrostEdit::pointToIssue(QListWidgetItem* item) {
 	IssueItem* issue = static_cast<IssueItem*>(item);
 	TabWidgetFrame* curTabFrameWidget = toTabWidgetFrame(mCurrentTabWidget->parentWidget());
 	TextEdit* edit = nullptr;
 
-	QString file = issue->getFile();
-	QFileInfo compiledFile(mCompiledFile);
 	QString path;
-	if(compiledFile.isFile()) {
-		path = compiledFile.path();
+	QFileInfo file(mCompiledFile);
+	if(file.exists()  && file.isFile()) {
+		path = file.absolutePath();
 	} else {
 		path = QDir::currentPath();
 	}
+	QString open = path+"/"+issue->getFile();
 
-	if(!QFileInfo(file).isFile()) {
-		file = path+"/"+file;
-	}
 
-	if(QFileInfo(file).isFile())
-		addDocument(file);
-	qDebug() << file;
+	addEditor(curTabFrameWidget, open);
 
-	if(mOpenDocuments.contains(file) == true) {
-		addEditor(curTabFrameWidget, file);
-		edit = toTextEdit(mCurrentTabWidget->currentWidget());
-	} else if(mOpenDocuments.contains(issue->getFile()) == false) {
-		addEditor(curTabFrameWidget, mCompiledFile);
-		edit = toTextEdit(mCurrentTabWidget->currentWidget());
-	} else {
-		addEditor(curTabFrameWidget, issue->getFile());
-		edit = toTextEdit(mCurrentTabWidget->currentWidget());
-	}
-	if(edit != nullptr) {
-		edit->setCursorPosition(issue->getRow()-1, issue->getColumn()-1);
-		edit->ensureCursorVisible();
-		edit->setFocus();
-	}
+
+	edit = toTextEdit(mCurrentTabWidget->currentWidget());
+
+	edit->setCursorPosition(issue->getRow()-1, issue->getColumn()-1);
+	edit->ensureCursorVisible();
+	edit->setFocus();
+
 }
 
 void FrostEdit::interpretCompileOut(QString line) {
 	//"C:/Ohjelmointi/FrostEditor/TestCodes/stars.frb" [141, 7] Warning 3: The variable name after "Next" is ignored
 
-	QRegularExpression expression("\\\"(.*)\\\"\\s+\\[\\s*(\\d+)\\,\\s*(\\d*)\\s*\\]\\s+(Warning|Error)\\s+(\\d+)\\:\\s+(.*)"); //\\s*(\\d+)\\:\\s*(.*)
-	auto match = expression.match(line);
+	auto match = mFrostCompilerErrorRegEx.match(line);
 	while(match.hasMatch()) {
 		//qDebug() << "Match! " <<match.capturedTexts();
 		ui->consoleTabs->setCurrentIndex(0);
@@ -800,7 +805,7 @@ void FrostEdit::interpretCompileOut(QString line) {
 			mIssueList->addWarning(wholeMsg, file, explanation, row, col);
 		else if(type.toLower() == "error")
 			mIssueList->addError(wholeMsg, file, explanation, row, col);
-		match = expression.match(line, match.capturedEnd());
+		match = mFrostCompilerErrorRegEx.match(line, match.capturedEnd());
 	}
 }
 
@@ -814,6 +819,18 @@ void FrostEdit::setUpDocumentHiltter(Document* doc) {
 	else
 		Q_ASSERT("Default highlight definition loading failed" && 0);
 	doc->setHighlighter(hilt);
+}
+
+int FrostEdit::tabWidgetContains(TabWidget* wid, Document* doc) {
+	for(int i = 0; i < wid->count(); i++) {
+		TextEdit* edit = toTextEdit(wid->widget(i));
+		if(edit == nullptr)
+			continue;
+		if(toDocument(edit->document()) == doc) {
+			return i;
+		}
+	}
+	return -1;
 }
 
 void FrostEdit::on_actionCompile_triggered() {

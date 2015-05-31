@@ -11,6 +11,7 @@
 #include <QSplitter>
 #include <QProcess>
 #include <QSettings>
+#include <QFileIconProvider>
 
 #include "settings.hpp"
 #include "TextEditor/document.hpp"
@@ -51,12 +52,14 @@ class FrostEdit : public QMainWindow {
 		Qate::HighlightDefinitionManager *mHiltDefManager;
 		TextEditor::Internal::Highlighter *mHighlighter;
 		QSharedPointer<TextEditor::Internal::HighlightDefinition> mHiltDef;
-
+		QFileIconProvider mFileIconProvider;
 
 		QFileInfo mCompileFile;
 
 
 		QProcess* mFrostCompiler;
+		QRegularExpression mFrostCompilerErrorRegEx;
+
 		QList<QProcess*> mRunningApplication;
 		IssueList* mIssueList;
 
@@ -83,8 +86,6 @@ class FrostEdit : public QMainWindow {
 		void addEditor(TabWidgetFrame*, const QString&);
 
 		void removeDocument(Document*);
-
-		void addDocument(const QString&);
 		void addDocumentItem(Document* doc);
 		void updateDocumentSelection(TabWidget*, int);
 		void changeTitle(TabWidget*, int);
@@ -130,7 +131,7 @@ class FrostEdit : public QMainWindow {
 		void on_actionCompileAndRun_triggered();
 		void applicationCloseRequest(int );
 
-		void pointIssueOut(QListWidgetItem*);
+		void pointToIssue(QListWidgetItem*);
 		void interpretCompileOut(QString);
 
 		void on_actionRun_triggered();
@@ -140,6 +141,9 @@ class FrostEdit : public QMainWindow {
 		void documentChanged(Document*);
 	private:
 		void setUpDocumentHiltter(Document*);
+		int tabWidgetContains(TabWidget*, Document*);
+		Document* addDocument(const QString&, bool ghost = false);
+
 		TextEdit* toTextEdit(QWidget*);
 		Document* toDocument(QTextDocument*);
 		TabWidgetFrame* toTabWidgetFrame(QWidget*);
