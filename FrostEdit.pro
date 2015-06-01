@@ -49,7 +49,8 @@ SOURCES += main.cpp\
     settings.cpp \
     TextEditor/codemodel.cpp \
     TextEditor/frostcodemodel.cpp \
-    TextEditor/frosttoken.cpp
+    TextEditor/frosttoken.cpp \
+    quitdialog.cpp
 
 
 HEADERS  += \
@@ -96,7 +97,8 @@ HEADERS  += \
     TextEditor/codepoint.hpp \
     TextEditor/frostcodemodel.hpp \
     TextEditor/symbol.hpp \
-    TextEditor/frosttoken.hpp
+    TextEditor/frosttoken.hpp \
+    quitdialog.hpp
 
 
 FORMS    += \
@@ -104,7 +106,8 @@ FORMS    += \
     frostedit.ui \
     tabwidgetframe.ui \
     frostdialog.ui \
-    settingsmenu.ui
+    settingsmenu.ui \
+    quitdialog.ui
 
 RESOURCES += \
     icons.qrc \
