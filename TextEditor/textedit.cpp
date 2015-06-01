@@ -1,5 +1,6 @@
 #include "textedit.hpp"
 #include <QPainter>
+#include <QGradient>
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QMenu>
@@ -138,6 +139,18 @@ void TextEdit::customTextModification(QKeyEvent* e) {
 				QPlainTextEdit::keyPressEvent(e);
 			}
 		break;
+		case Qt::Key_Backspace:{
+			QTextCursor cur = textCursor();
+			QTextBlock block = cur.block();
+			int tmp1;
+			if(startsRegion(block, tmp1)) {
+				QList<QTextBlock> blocks = getRegionSubBlocks(block.next());
+				setBlocksVisible(blocks, true);
+			}
+			QTextCursor decim = cur;
+			QPlainTextEdit::keyPressEvent(e);
+
+		}break;
 		case Qt::Key_Return:
 		case Qt::Key_Enter: {
 			QTextCursor cur = textCursor();
@@ -293,13 +306,10 @@ void TextEdit::lineNumberAreaMouseReleaseEvent(QMouseEvent* e) {
 			Document* doc = toDocument(document());
 			int id;
 			if(startsRegion(block, id) && id != 0) {
-				QTextBlock nextblock = block.next();
-				if(nextblock.isValid()) {
-					QList<QTextBlock> list = getRegionSubBlocks(nextblock);
-					list = list.mid(1, list.length()-2);
-					setBlocksVisible(list, !nextblock.isVisible());
-					repaint();
-				};
+				QList<QTextBlock> list = getRegionSubBlocks(block);
+				list = list.mid(1, list.length()-2);
+				setBlocksVisible(list, !block.next().isVisible());
+				repaint();
 			}
 
 		}
@@ -324,20 +334,18 @@ void TextEdit::setBlocksVisible(QList<QTextBlock>& blocks, bool visible) {
 		return;
 
 
-	QSizeF size = doc->size();
+	int blockCount = document()->blockCount();
 	QPlainTextDocumentLayout* layout = qobject_cast<QPlainTextDocumentLayout*>(doc->documentLayout());
+
 	for(QTextBlock& b: blocks) {
 		b.setVisible(visible);
-
 	}
+	document()->markContentsDirty(blocks.first().position(), blocks.last().position() - blocks.first().position());
+
 	viewport()->update();
-
-	emit layout->requestUpdate();
-	emit layout->documentSizeChanged(document()->size());
-
-	QAbstractScrollArea::update();
-	updateGeometry();
 }
+
+
 
 void TextEdit::drawIndentationPipes(QPainter& painter, QTextBlock& block, int top, int bottom, int space) {
 	QTextBlock nextblock = block.next();
@@ -472,7 +480,7 @@ void TextEdit::contextMenuEvent(QContextMenuEvent* e) {
 	QMenu *menu = createStandardContextMenu();
 	menu->addSeparator();
 	menu->addAction(tr("Show line numbers"));
-	menu->addAction(tr("Auto indent slection"));
+	menu->addAction(tr("Auto indent selection"));
 	menu->exec(e->globalPos());
 	delete menu;
 
@@ -594,11 +602,11 @@ void TextEdit::paintEvent(QPaintEvent* e) {
 	QTextBlock block = firstVisibleBlock();
 	int y  = 0;
 	while(block.isValid() && y < viewport()->height()) {
-
+		y = blockBoundingGeometry(block).top();
 		int height = blockBoundingGeometry(block).height();
 		if(block.isVisible())
-			y = y + height;
-		if(block.next().isValid() && !block.next().isVisible()) {
+			y += height;
+		if(block.isVisible() && block.next().isValid() && !block.next().isVisible()) {
 			p.setPen(QColor(Qt::cyan).light(60));
 			p.drawLine(0, y, viewport()->width(), y);
 		}
@@ -761,9 +769,11 @@ void TextEdit::initCompleter() {
 			mCompleter->setCaseSensitivity(Qt::CaseInsensitive);
 
 		}
+
+		connect(mCompleter, SIGNAL(activated(QString)), this, SLOT(insertCompletion(QString)));
+
 	}
 
-	connect(mCompleter, SIGNAL(activated(QString)), this, SLOT(insertCompletion(QString)));
 
 }
 
@@ -798,17 +808,10 @@ void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *e) {
 
 	QPainter painter(mLineNumberWidget);
 	painter.fillRect(e->rect(), mLineNumberBackgroundColor);
-	int space = fontMetrics().width(QLatin1Char('9'));
-	QLinearGradient grad;
-	grad.setColorAt(0.0, QColor(0, 0, 0, 0));
-	grad.setColorAt(0.5, mLineNumberBackgroundColor);
-	grad.setStart(e->rect().x(), e->rect().y());
-	grad.setFinalStop(e->rect().x()+e->rect().width(), e->rect().y());
-	painter.fillRect(QRect(e->rect().x(), e->rect().y(), e->rect().width()-space*2, e->rect().height()), QBrush(grad));
+	int space = fontMetrics().width(QLatin1Char('_'));
 
 
-
-	QTextBlock prevblock = firstVisibleBlock();;
+	QTextBlock prevblock = firstVisibleBlock();
 	QTextBlock block = firstVisibleBlock();
 	int blockNumber = block.blockNumber();
 	int top = (int) blockBoundingGeometry(block).translated(contentOffset()).top();
@@ -860,16 +863,6 @@ void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *e) {
 
 	}
 
-	painter.setPen(QColor(Qt::darkGray));
-	painter.drawLine(lineNumberAreaWidth() - space*2,
-			 0,
-			 lineNumberAreaWidth() - space*2,
-			 e->rect().height());
-
-	painter.drawLine(lineNumberAreaWidth() - space*(getDigitCount()-2),
-			 0,
-			 lineNumberAreaWidth() - space*(getDigitCount()-2),
-			 e->rect().height());
 
 }
 
@@ -938,10 +931,10 @@ int TextEdit::lineNumberAreaWidth() {
 }
 
 int TextEdit::getDigitCount() {
-	int digits = 9;
+	int digits = 8;
 	int max = qMax(1, blockCount());
-	while (max >= 10000) {
-		max /= 10000;
+	while (max >= 1000) {
+		max /= 1000;
 		++digits;
 	}
 	return digits;
@@ -969,8 +962,6 @@ QList<QTextBlock> TextEdit::getRegionSubBlocks(const QTextBlock& block) {
 
 	int regionid = data->getFoldingIndent();
 
-	if(regionid == 0)
-		return list;
 
 	QTextBlock iblock = block;
 	int id;

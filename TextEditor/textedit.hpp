@@ -120,7 +120,7 @@ class TextEdit : public QPlainTextEdit {
 
 		void find(const QString& str);
 		void setBlocksVisible(QList<QTextBlock>& blocks, bool visible);
-
+		void updateHeight();
 	private:
 		void drawIndentationPipes(QPainter&, QTextBlock&, int top, int bottom, int space);
 		void drawBookMark(QPainter&, QTextBlock&, int top, int bottom, int space);
