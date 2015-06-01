@@ -79,7 +79,9 @@
 			<item> MemBlock </item>
         </list>
 		<list name="functions">
-			<item> Color </item> 
+			<item> Color </item>
+			<item> Cls </item>
+			<item> ClsColor </item>
 			<item> PushColor </item> 
 			<item> PopColor </item> 
 			<item> GetPixel </item> 
@@ -98,6 +100,8 @@
 			<item> Int </item> 
 			<item> LoadImage </item> 
 			<item> DrawImage </item>
+			<item> DrawToImage </item>
+			<item> DrawToScreen </item>
 			<item> DrawImageBox </item>
 			<item> DrawImageBoxScaled </item>
 			<item> DrawImageBoxResized </item>
@@ -261,7 +265,7 @@
 				
 				<DetectChar attribute="String" context="String" char="&quot;"/>
 				<DetectChar attribute="Comment" context="Comment" char="'"/>
-				<RangeDetect attribute="Comment" context="Comment" char="/" char1="/"/>
+				<Detect2Chars attribute="Comment" context="Comment" char="/" char1="/"/>
 				<RegExpr attribute="Comment" context="Comment2" String="\b(Rem)\b" beginRegion="multilineComment"/>	
 			</context>
         
