@@ -131,10 +131,19 @@ FrostEdit::FrostEdit(QWidget *parent) :
 	mIssueList->show();
 
 	if(Settings::firstTime()) {
-		Settings::set("DefaultCompiler/Path", "");
+		if(Settings::get("DefaultCompiler/Path").isNull()) {
+			QString compiler = QFileDialog::getExistingDirectory(this, tr("Set cbcompiler directory"), tr(""));
+			Settings::set("DefaultCompiler/Path", compiler);
+		}
 		Settings::set("DefaultCompiler/Environment", "");
 		Settings::set("TextEditor/Font", "Lucida Console");
 		Settings::set("TextEditor/FontSize", 10);
+		Settings::sync();
+	} else {
+		if(Settings::get("DefaultCompiler/Path").isNull()) {
+			QString compiler = QFileDialog::getExistingDirectory(this, tr("Set cbcompiler directory"), tr(""));
+			Settings::set("DefaultCompiler/Path", compiler);
+		}
 		Settings::sync();
 	}
 
