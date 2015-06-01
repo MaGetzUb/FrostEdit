@@ -269,7 +269,7 @@ void FrostEdit::removeDocument(Document* doc) {
 			}
 		}
 	}
-	qDebug() << "Removing "<<doc->getFullPath();
+
 	mOpenDocuments.remove(doc->getFullPath());
 	mDocumentWatcher->removePath(doc->getFullPath());
 	disconnect(doc, SIGNAL(textChanged(Document*,bool)), this, SLOT(updateTabHeader(Document*, bool)));
