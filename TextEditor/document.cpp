@@ -184,6 +184,7 @@ void Document::setFile(const QString& file) {
 void Document::setHighlighter(TextEditor::Internal::Highlighter* hiltter) {
 	mHighlighter = hiltter;
 	hiltter->setDocument(qobject_cast<QTextDocument*>(this));
+	emit highlighterChanged(this, mHighlighter);
 }
 
 bool Document::hasHighlighter() const {

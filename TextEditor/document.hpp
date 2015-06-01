@@ -72,6 +72,7 @@ class Document : public QTextDocument {
 	signals:
 		void pathChanged(QString);
 		void textChanged(Document*, bool b);
+		void highlighterChanged(Document*, TextEditor::Internal::Highlighter*);
 };
 
 #endif // DOCUMENT_HPP
