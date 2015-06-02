@@ -50,7 +50,8 @@ SOURCES += main.cpp\
     TextEditor/codemodel.cpp \
     TextEditor/frostcodemodel.cpp \
     TextEditor/frosttoken.cpp \
-    quitdialog.cpp
+    quitdialog.cpp \
+    syntaxstyle.cpp
 
 
 HEADERS  += \
@@ -98,7 +99,8 @@ HEADERS  += \
     TextEditor/frostcodemodel.hpp \
     TextEditor/symbol.hpp \
     TextEditor/frosttoken.hpp \
-    quitdialog.hpp
+    quitdialog.hpp \
+    syntaxstyle.hpp
 
 
 FORMS    += \
