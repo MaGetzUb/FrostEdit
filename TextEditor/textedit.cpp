@@ -592,7 +592,7 @@ void TextEdit::wheelEvent(QWheelEvent* e) {
 		return;
 	}
 	QPlainTextEdit::wheelEvent(e);
-
+	viewport()->update();
 }
 
 void TextEdit::paintEvent(QPaintEvent* e) {
