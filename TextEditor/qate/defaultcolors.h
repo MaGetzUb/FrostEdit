@@ -60,7 +60,7 @@ namespace Qate {
 			const QTextCharFormat &alertFormat() const { return mAlertFormat; }
 			const QTextCharFormat &errorFormat() const { return mErrorFormat; }
 			const QTextCharFormat &functionFormat() const { return mFunctionFormat; }
-			const QTextCharFormat &regionMarketFormat() const { return mRegionMarkerFormat; }
+			const QTextCharFormat &regionMarkerFormat() const { return mRegionMarkerFormat; }
 			const QTextCharFormat &othersFormat() const { return mOthersFormat; }
 
 			QString name(const QTextCharFormat &format) const;
