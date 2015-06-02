@@ -242,7 +242,11 @@ void Highlighter::iterateThroughRules(const QString &text,
 
 			if(!mIndentationBasedFolding) {
 				BlockData* curBlockData = blockData(currentBlockUserData());
-				BlockData* prevBlockData = blockData(currentBlock().previous().userData());
+				QTextBlock prevBlock = currentBlock().previous();
+				BlockData* prevBlockData = nullptr;
+				if(prevBlock.isValid())
+					prevBlockData = blockData(currentBlock().previous().userData());
+
 				if(!rule->beginRegion().isEmpty()) {
 					curBlockData->mFoldingRegions.push(rule->beginRegion());
 					++mRegionDepth;
@@ -257,7 +261,9 @@ void Highlighter::iterateThroughRules(const QString &text,
 					if(!currentRegions->isEmpty() && rule->endRegion() == currentRegions->top()) {
 						currentRegions->pop();
 						--mRegionDepth;
-						curBlockData->setRegionId(prevBlockData->getRegionId()-1);
+
+						if(prevBlockData != nullptr) curBlockData->setRegionId(prevBlockData->getRegionId()-1);
+
 						if(progress->isClosingBraceMatchAtNonEnd())
 							--curBlockData->mFoldingIndentDelta;
 					}
