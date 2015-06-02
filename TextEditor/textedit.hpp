@@ -69,11 +69,13 @@ class TextEdit : public QPlainTextEdit {
 		bool mClicked;
 		int mCurrentBlockCount;
 
-		QColor mLineNumberBackgroundColor;
-		QColor mLineNumberForegroundColor;
-		QColor mIndentationVisualizerColor;
-		QColor mIndentationVisualizerSelectionColor;
-		QColor mIndentationisualizerNewBlockColor;
+		QTextCharFormat mLineNumberFormat;
+		QTextCharFormat mSelectedLineNumberFormat;
+		QTextCharFormat mSimilarOccurance;
+		QTextCharFormat mCurrentLine;
+		QTextCharFormat mRegionVisualizerFormat;
+		QTextCharFormat mRegionVisualizerSelectedFormat;
+
 		TextBlockSelection mBlockSelection;
 		bool mIsBlockSelection;
 	public:
@@ -92,6 +94,12 @@ class TextEdit : public QPlainTextEdit {
 
 		QWidget* getParentWidget();
 		QRect calculateSize() const;
+
+		void setLineNumberFormat(const QTextCharFormat& fmt);
+		void setSimilarOccuranceFormat(const QTextCharFormat& fmt);
+		void setSelectedLine(const QTextCharFormat& fmt);
+		void setRegionVisualizerFormat(const QTextCharFormat& fmt);
+		void setRegionVisualizerSelectedFormat(const QTextCharFormat& fmt);
 
 		void setFont(const QFont &);
 
@@ -122,7 +130,7 @@ class TextEdit : public QPlainTextEdit {
 		void setBlocksVisible(QList<QTextBlock>& blocks, bool visible);
 		void updateHeight();
 	private:
-		void drawIndentationPipes(QPainter&, QTextBlock&, int top, int bottom, int space);
+		void drawIndentationPipes(QPainter&, QTextBlock&, int top, int bottom, int space, const QTextCharFormat&);
 		void drawBookMark(QPainter&, QTextBlock&, int top, int bottom, int space);
 		void drawModification(QPainter&, QTextBlock&, int top, int bottom, int space);
 
@@ -150,7 +158,6 @@ class TextEdit : public QPlainTextEdit {
 		void updateDocumentLength(int newBlockCount);
 		void updateLineNumberArea(const QRect&, int);
 		void highlightCurrentLine();
-		void debugSliderValue(int);
 		void handleBlockSelection(int rowdiff, int coldiff);
 };
 

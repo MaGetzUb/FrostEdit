@@ -226,8 +226,6 @@ void TextEdit::insertCompletion(const QString& completion) {
 	QTextCursor tc = textCursor();
 	int extra = completion.length() - mCompleter->completionPrefix().length();
 
-	qDebug() << completion;
-	qDebug() << extra;
 
 	tc.movePosition(QTextCursor::Left);
 	tc.movePosition(QTextCursor::EndOfWord);
@@ -261,15 +259,15 @@ TextEdit::TextEdit(QWidget *parent):
 	mCompleter->setCompletionMode(QCompleter::PopupCompletion);
 	mCompleter->setCaseSensitivity(Qt::CaseInsensitive);
 
-	Document* doc = toDocument(document());
+	mSimilarOccurance.setBackground(QColor(0, 255, 200));
+	mSimilarOccurance.setForeground(QColor(255, 255, 255));
+	mLineNumberFormat.setBackground(QColor(Qt::lightGray));
+	mLineNumberFormat.setForeground(QColor(Qt::lightGray).dark(180));
 
-
-
-	mLineNumberBackgroundColor = QColor(Qt::lightGray);
-	mLineNumberForegroundColor = QColor(Qt::lightGray).dark(180);
-	mIndentationVisualizerColor = QColor(Qt::lightGray).dark(180);
-	mIndentationVisualizerSelectionColor = QColor(Qt::red).dark(180);
-	mIndentationisualizerNewBlockColor = QColor(Qt::white);
+	mRegionVisualizerFormat.setForeground(QColor(Qt::lightGray).dark(180));
+	mRegionVisualizerFormat.setBackground(QColor(Qt::white));
+	mRegionVisualizerSelectedFormat.setForeground(QColor(Qt::red));
+	mRegionVisualizerSelectedFormat.setBackground(QColor(Qt::white));
 }
 
 TextEdit::TextEdit(QWidget* parent, Document* doc):
@@ -347,7 +345,7 @@ void TextEdit::setBlocksVisible(QList<QTextBlock>& blocks, bool visible) {
 
 
 
-void TextEdit::drawIndentationPipes(QPainter& painter, QTextBlock& block, int top, int bottom, int space) {
+void TextEdit::drawIndentationPipes(QPainter& painter, QTextBlock& block, int top, int bottom, int space, const QTextCharFormat& fmt) {
 	QTextBlock nextblock = block.next();
 	int blockheight = blockBoundingGeometry(block).height();
 
@@ -358,7 +356,9 @@ void TextEdit::drawIndentationPipes(QPainter& painter, QTextBlock& block, int to
 	int nextregion;
 	if(startsRegion(block, regionid)) {
 		QRect rect(lineNumberAreaWidth() - space - size/2, top+blockheight/2 - size/2, size, size);
-		painter.fillRect(rect, mIndentationisualizerNewBlockColor);
+		painter.fillRect(rect, fmt.background().color());
+
+		painter.setPen(fmt.foreground().color());
 		painter.drawRect(rect);
 		if(nextblock.isValid()) {
 			if(nextblock.isVisible()) {
@@ -551,8 +551,7 @@ void TextEdit::mouseDoubleClickEvent(QMouseEvent* e) {
 		while(!iter.isNull()) {
 			QTextEdit::ExtraSelection sel;
 			sel.cursor = iter;
-			sel.format.setBackground(QColor(64, 196, 96));
-			sel.format.setForeground(QColor(255, 255, 255));
+			sel.format = mSimilarOccurance;
 			selections.append(sel);
 			iter = document()->find(str, iter, QTextDocument::FindWholeWords);
 		}
@@ -807,7 +806,7 @@ void TextEdit::updateDocumentLength(int ) {
 void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *e) {
 
 	QPainter painter(mLineNumberWidget);
-	painter.fillRect(e->rect(), mLineNumberBackgroundColor);
+	painter.fillRect(e->rect(), mLineNumberFormat.background());
 	int space = fontMetrics().width(QLatin1Char('_'));
 
 
@@ -832,20 +831,19 @@ void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *e) {
 
 
 			QString number = QString::number(blockNumber + 1);
-			painter.setPen(QColor(mLineNumberForegroundColor));
-			painter.setFont(font());
+
+			painter.setPen(mLineNumberFormat.foreground().color());
 			painter.drawText(0, top, lineNumberAreaWidth() - space*2 - 4, fontMetrics().height(), Qt::AlignRight, number);
 
 
 			if(block.userData() != nullptr) {
 				drawBookMark(painter, block, top, bottom, space);
 				drawModification(painter, block, top, bottom, space);
+				QTextCharFormat pipeFormat = mRegionVisualizerFormat;
 				if(!mRegionUnderCursor.isEmpty())
 					if(mRegionUnderCursor.contains(block))
-							painter.setPen(mIndentationVisualizerSelectionColor);
-						else
-							painter.setPen(mIndentationVisualizerColor);
-				drawIndentationPipes(painter, block, top, bottom, space);
+							pipeFormat = mRegionVisualizerSelectedFormat;
+				drawIndentationPipes(painter, block, top, bottom, space, pipeFormat);
 			}
 
 
@@ -898,6 +896,26 @@ const QString TextEdit::textUnderCursor() {
 
 QWidget* TextEdit::getParentWidget() {
 	return mParentWidget;
+}
+
+void TextEdit::setLineNumberFormat(const QTextCharFormat& fmt) {
+	mLineNumberFormat = fmt;
+}
+
+void TextEdit::setSimilarOccuranceFormat(const QTextCharFormat& fmt) {
+	mSimilarOccurance = fmt;
+}
+
+void TextEdit::setSelectedLine(const QTextCharFormat& fmt) {
+	mCurrentLine = fmt;
+}
+
+void TextEdit::setRegionVisualizerFormat(const QTextCharFormat& fmt) {
+	mRegionVisualizerFormat = fmt;
+}
+
+void TextEdit::setRegionVisualizerSelectedFormat(const QTextCharFormat& fmt) {
+	mRegionVisualizerSelectedFormat = fmt;
 }
 
 void TextEdit::setFont(const QFont& fnt) {
@@ -968,7 +986,6 @@ QList<QTextBlock> TextEdit::getRegionSubBlocks(const QTextBlock& block) {
 	if(startsRegion(iblock, id) && id >= regionid) {
 		list.append(iblock);
 		iblock = iblock.next();
-		qDebug() << blockData(iblock)->getFoldingIndent();
 	} else {
 		iblock = getBlockRegionStart(block);
 		list.append(iblock);
@@ -1022,7 +1039,7 @@ void TextEdit::highlightCurrentLine() {
 		QTextEdit::ExtraSelection selection;
 		QColor lineColor = QColor(200, 220, 255);
 
-		selection.format.setBackground(lineColor);
+		selection.format = mCurrentLine;
 		selection.format.setProperty(QTextFormat::FullWidthSelection, true);
 		selection.cursor = textCursor();
 		selection.cursor.clearSelection();
@@ -1034,9 +1051,6 @@ void TextEdit::highlightCurrentLine() {
 	mLineNumberWidget->repaint();
 }
 
-void TextEdit::debugSliderValue(int val) {
-	qDebug() << val;
-}
 
 void TextEdit::handleBlockSelection(int rowdiff, int coldiff) {
 	Document* doc = toDocument(document());
