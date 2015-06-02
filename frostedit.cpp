@@ -58,14 +58,7 @@ FrostEdit::FrostEdit(QWidget *parent) :
 	connect(ui->openFilesWidget, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(addEditor(QListWidgetItem*)));
 
 	for(TabWidgetFrame* tab: mTabWidgetFrames) {
-		connect(tab->tabWidget(), SIGNAL(currentChanged(TabWidget*, int)), this, SLOT(updateDocumentSelection(TabWidget*, int)));
-		connect(tab->tabWidget(), SIGNAL(currentChanged(TabWidget*, int)), this, SLOT(changeTitle(TabWidget*, int)));
-		connect(tab->tabWidget(), SIGNAL(tabCloseRequested(TabWidget*,int)), this, SLOT(closeTab(TabWidget*, int)));
-		connect(tab, SIGNAL(close(TabWidgetFrame*)), this, SLOT(closeTabWidgetFrame(TabWidgetFrame*)));
-		connect(tab, SIGNAL(splitHorizontally(TabWidgetFrame*)), this, SLOT(splitHorizontally(TabWidgetFrame*)));
-		connect(tab, SIGNAL(splitVertically(TabWidgetFrame*)), this, SLOT(splitVertically(TabWidgetFrame*)));
-		connect(tab, SIGNAL(openToNewWindow(TabWidgetFrame*)), this, SLOT(openToNewWindow(TabWidgetFrame*)));
-		connect(tab, SIGNAL(itemChanged(TabWidgetFrame*,QString)), this, SLOT(addEditor(TabWidgetFrame*,QString)));
+		connectTabWidgetFrameSignals(tab);
 	}
 
 	connect(this, SIGNAL(tabWidgetChanged(TabWidget*)), this, SLOT(setActiveTabWidget(TabWidget*)));
@@ -369,34 +362,17 @@ void FrostEdit::closeTab(TabWidget* wid, int id) {
 
 	int editors = openEditors(doc);
 	qDebug() << "Open in editors: " << editors;
-
+	int ans = -1;
 	if(editors == 1) {
-		if(doc->isModified()) {
-			int msg = QMessageBox::warning(this, "Warning", tr("The file %1 is modified, do you want to save the changes?").arg(doc->getFileName()), "Yes", "No", "Cancel");
-			switch(msg) {
-				case 0:
-					if(doc->getFileInfo().isFile()) {
-						doc->save();
-					} else {
-						on_actionSave_As_triggered();
-					}
-				case 1:
-				break;
-				case 2:
-					return;
-				break;
-			}
-
+		ans = documentSafeClose(doc);
+		if(ans == 0 || ans == 1) {
+			wid->removeTab(id);
+			delete e;
+			removeDocument(doc);
+			return;
 		}
 	}
-
-
 	wid->removeTab(id);
-	delete e;
-
-	if(editors == 1)
-		removeDocument(doc);
-
 
 }
 
@@ -440,12 +416,14 @@ Document* FrostEdit::addDocument(const QString& path, bool ghost) {
 	QString loadPath = path;
 	if(tmpInfo.exists() && tmpInfo.isFile()) {
 		loadPath = tmpInfo.absoluteFilePath();
-	} else
-		return nullptr;
+	}
+
 	if(mOpenDocuments.contains(loadPath)) {
 		Document* doc = mOpenDocuments[loadPath];
 		return doc;
-	}
+	} else
+		return nullptr;
+
 
 	//If file didn't exists and the path isn't file at all (and it's not ghost), we will make a MessageBox.
 	if(!QFile::exists(loadPath)) {
@@ -510,7 +488,9 @@ void FrostEdit::on_actionSave_As_triggered() {
 void FrostEdit::on_closeDocument_clicked() {
 	DocumentItem* item = static_cast<DocumentItem*>(ui->openFilesWidget->currentItem());
 	Document* doc = item->getDocument();
-	removeDocument(doc);
+	int ans = documentSafeClose(doc);
+	if(ans == 0 || ans == 1)
+		removeDocument(doc);
 }
 
 void FrostEdit::widgetChanged(QWidget* old, QWidget* now) {
@@ -612,15 +592,15 @@ void FrostEdit::split(TabWidgetFrame* tab, Qt::Orientation orient) {
 	}
 
 
-
-	connect(mTabWidgetFrames.last()->tabWidget(), SIGNAL(currentChanged(TabWidget*, int)), this, SLOT(updateDocumentSelection(TabWidget*, int)));
-	connect(mTabWidgetFrames.last()->tabWidget(), SIGNAL(currentChanged(TabWidget*, int)), this, SLOT(changeTitle(TabWidget*, int)));
-	connect(mTabWidgetFrames.last()->tabWidget(), SIGNAL(tabCloseRequested(TabWidget*,int)), this, SLOT(closeTab(TabWidget*, int)));
-	connect(mTabWidgetFrames.last(), SIGNAL(close(TabWidgetFrame*)), this, SLOT(closeTabWidgetFrame(TabWidgetFrame*)));
-	connect(mTabWidgetFrames.last(), SIGNAL(splitHorizontally(TabWidgetFrame*)), this, SLOT(splitHorizontally(TabWidgetFrame*)));
-	connect(mTabWidgetFrames.last(), SIGNAL(splitVertically(TabWidgetFrame*)), this, SLOT(splitVertically(TabWidgetFrame*)));
-	connect(mTabWidgetFrames.last(), SIGNAL(openToNewWindow(TabWidgetFrame*)), this, SLOT(openToNewWindow(TabWidgetFrame*)));
-	connect(mTabWidgetFrames.last(), SIGNAL(itemChanged(TabWidgetFrame*,QString)), this, SLOT(addEditor(TabWidgetFrame*,QString)));
+	connectTabWidgetFrameSignals(mTabWidgetFrames.last());
+	//connect(mTabWidgetFrames.last()->tabWidget(), SIGNAL(currentChanged(TabWidget*, int)), this, SLOT(updateDocumentSelection(TabWidget*, int)));
+	//connect(mTabWidgetFrames.last()->tabWidget(), SIGNAL(currentChanged(TabWidget*, int)), this, SLOT(changeTitle(TabWidget*, int)));
+	//connect(mTabWidgetFrames.last()->tabWidget(), SIGNAL(tabCloseRequested(TabWidget*,int)), this, SLOT(closeTab(TabWidget*, int)));
+	//connect(mTabWidgetFrames.last(), SIGNAL(close(TabWidgetFrame*)), this, SLOT(closeTabWidgetFrame(TabWidgetFrame*)));
+	//connect(mTabWidgetFrames.last(), SIGNAL(splitHorizontally(TabWidgetFrame*)), this, SLOT(splitHorizontally(TabWidgetFrame*)));
+	//connect(mTabWidgetFrames.last(), SIGNAL(splitVertically(TabWidgetFrame*)), this, SLOT(splitVertically(TabWidgetFrame*)));
+	//connect(mTabWidgetFrames.last(), SIGNAL(openToNewWindow(TabWidgetFrame*)), this, SLOT(openToNewWindow(TabWidgetFrame*)));
+	//connect(mTabWidgetFrames.last(), SIGNAL(itemChanged(TabWidgetFrame*,QString)), this, SLOT(addEditor(TabWidgetFrame*,QString)));
 
 	for(Document* doc: mOpenDocuments)
 		if(doc != nullptr)
@@ -794,11 +774,10 @@ void FrostEdit::pointToIssue(QListWidgetItem* item) {
 }
 
 void FrostEdit::interpretCompileOut(QString line) {
-	//"C:/Ohjelmointi/FrostEditor/TestCodes/stars.frb" [141, 7] Warning 3: The variable name after "Next" is ignored
 
 	auto match = mFrostCompilerErrorRegEx.match(line);
 	while(match.hasMatch()) {
-		//qDebug() << "Match! " <<match.capturedTexts();
+
 		ui->consoleTabs->setCurrentIndex(0);
 		QStringList captures = match.capturedTexts();
 
@@ -960,8 +939,6 @@ void FrostEdit::on_actionRun_triggered() {
 	mRunningApplication.append(new QProcess(this));
 	mRunningApplication.last()->setWorkingDirectory(mCompileFile.absolutePath());
 	mRunningApplication.last()->setProcessChannelMode(QProcess::SeparateChannels);
-	//mRunningApplication.last()->setProgram(gCompilerPath+"cbrun.exe");
-	//mRunningApplication.last()->setProgram("cmd");
 	Console* console = new Console(this);
 	console->setFont(mFont);
 	mApplicationOutput->addTab(console, "cbrun.exe");
@@ -973,4 +950,51 @@ void FrostEdit::on_actionRun_triggered() {
 	ui->consoleTabs->setCurrentIndex(ui->consoleTabs->indexOf(mApplicationOutput));
 	mApplicationOutput->setCurrentIndex(mApplicationOutput->indexOf(console));
 
+}
+
+int FrostEdit::documentSafeClose(Document* doc) {
+	if(doc->isModified()) {
+		int msg = QMessageBox::warning(this, "Warning", tr("The file %1 is modified, do you want to save the changes?").arg(doc->getFileName()), "Yes", "No", "Cancel");
+		switch(msg) {
+			case 0:
+				if(doc->getFileInfo().isFile()) {
+					doc->save();
+				} else {
+					on_actionSave_As_triggered();
+				}
+			case 1:
+			case 2:
+				return msg;
+			break;
+		}
+
+	}
+}
+
+void FrostEdit::connectTabWidgetFrameSignals(TabWidgetFrame* tab) {
+	connect(tab->tabWidget(), SIGNAL(currentChanged(TabWidget*, int)), this, SLOT(updateDocumentSelection(TabWidget*, int)));
+	connect(tab->tabWidget(), SIGNAL(currentChanged(TabWidget*, int)), this, SLOT(changeTitle(TabWidget*, int)));
+	connect(tab->tabWidget(), SIGNAL(tabCloseRequested(TabWidget*,int)), this, SLOT(closeTab(TabWidget*, int)));
+	connect(tab, SIGNAL(close(TabWidgetFrame*)), this, SLOT(closeTabWidgetFrame(TabWidgetFrame*)));
+	connect(tab, SIGNAL(splitHorizontally(TabWidgetFrame*)), this, SLOT(splitHorizontally(TabWidgetFrame*)));
+	connect(tab, SIGNAL(splitVertically(TabWidgetFrame*)), this, SLOT(splitVertically(TabWidgetFrame*)));
+	connect(tab, SIGNAL(openToNewWindow(TabWidgetFrame*)), this, SLOT(openToNewWindow(TabWidgetFrame*)));
+	connect(tab, SIGNAL(itemChanged(TabWidgetFrame*,QString)), this, SLOT(addEditor(TabWidgetFrame*,QString)));
+}
+
+void FrostEdit::closeEvent(QCloseEvent* e) {
+	e->ignore();
+
+	for(auto& i: mOpenDocuments.keys()) {
+		Document* doc = mOpenDocuments[i];
+		int id = documentSafeClose(doc);
+		if(id == 0 || id == 1)
+			removeDocument(doc);
+		else if(id == 2) {
+			e->ignore();
+			return;
+		}
+	}
+
+	e->accept();
 }

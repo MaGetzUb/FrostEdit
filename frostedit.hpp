@@ -56,7 +56,6 @@ class FrostEdit : public QMainWindow {
 
 		QFileInfo mCompileFile;
 
-
 		QProcess* mFrostCompiler;
 		QRegularExpression mFrostCompilerErrorRegEx;
 
@@ -78,6 +77,7 @@ class FrostEdit : public QMainWindow {
 		void fileChangedOutside(QString);
 		void updateTabHeader(Document*, bool);
 	private slots:
+
 
 		void updateSettings();
 
@@ -136,10 +136,16 @@ class FrostEdit : public QMainWindow {
 
 		void on_actionRun_triggered();
 
+
 	signals:
 		void tabWidgetChanged(TabWidget*);
 		void documentChanged(Document*);
 	private:
+
+		int documentSafeClose(Document* );
+
+		void connectTabWidgetFrameSignals(TabWidgetFrame*);
+		void closeEvent(QCloseEvent *);
 		void setUpDocumentHiltter(Document*);
 		int tabWidgetContains(TabWidget*, Document*);
 		Document* addDocument(const QString&, bool ghost = false);
