@@ -20,7 +20,7 @@ class SyntaxStyle {
 	QTextCharFormat mRegionMarkerFormat;
 	QTextCharFormat mOthersFormat;
 	QTextCharFormat mOperator;
-	QTextCharFormat mNumberFormat;
+	QTextCharFormat mNumber;
 	QTextCharFormat mSelection;
 	//TextEdit colors:
 	QTextCharFormat mLineNumber;

@@ -15,6 +15,9 @@ SyntaxStyle::SyntaxStyle(const QString& path) :
 
 void SyntaxStyle::loadDefaults() {
 	using namespace Qate;
+
+	mSelection.setBackground(Qt::darkBlue);
+	mSelection.setForeground(Qt::white);
 	mBasicTextFormat.setForeground(Qt::black);
 	mBasicTextFormat.setBackground(Qt::white);
 	mKeywordFormat = DefaultColors::instance().keywordFormat();
@@ -31,10 +34,12 @@ void SyntaxStyle::loadDefaults() {
 	mLineNumber.setBackground(QColor(Qt::gray));
 	mSimilarOccurance.setForeground(QColor(255, 255, 255));
 	mSimilarOccurance.setBackground(QColor(0, 200, 255));
-	mRegionVisualizer.setForeground(QColor(Qt::gray).dark(180));
+	mRegionVisualizer.setForeground(QColor(Qt::gray));
 	mRegionVisualizer.setBackground(QColor(255, 255, 255));
 	mRegionVisualizerSelected.setForeground(QColor(Qt::red));
 	mRegionVisualizerSelected.setBackground(QColor(255, 255, 255));
+	mNumber.setForeground(QColor(Qt::darkRed));
+	mOperator.setForeground(QColor(Qt::gray).dark(180));
 }
 
 bool SyntaxStyle::load(const QString& path) {
@@ -71,9 +76,9 @@ bool SyntaxStyle::save(const QString& path) {
 void SyntaxStyle::applyToHighlighter(TextEditor::Internal::Highlighter* hiltter) {
 	hiltter->configureFormat(TextEditor::Internal::Highlighter::Keyword, mKeywordFormat);
 	hiltter->configureFormat(TextEditor::Internal::Highlighter::DataType, mDataTypeFormat);
-	hiltter->configureFormat(TextEditor::Internal::Highlighter::Decimal, mNumberFormat);
-	hiltter->configureFormat(TextEditor::Internal::Highlighter::BaseN, mNumberFormat);
-	hiltter->configureFormat(TextEditor::Internal::Highlighter::Float, mNumberFormat);
+	hiltter->configureFormat(TextEditor::Internal::Highlighter::Decimal, mNumber);
+	hiltter->configureFormat(TextEditor::Internal::Highlighter::BaseN, mNumber);
+	hiltter->configureFormat(TextEditor::Internal::Highlighter::Float, mNumber);
 	hiltter->configureFormat(TextEditor::Internal::Highlighter::Char, mCharFormat);
 	hiltter->configureFormat(TextEditor::Internal::Highlighter::String, mStringFormat);
 	hiltter->configureFormat(TextEditor::Internal::Highlighter::Comment, mCommentFormat);
@@ -114,7 +119,7 @@ QTextCharFormat*SyntaxStyle::formatByName(const QString& str) {
 	else if(str == "Datatype")
 		return &mDataTypeFormat;
 	else if(str == "Number")
-		return &mNumberFormat;
+		return &mNumber;
 	else if(str == "Char")
 		return &mCharFormat;
 	else if(str == "String")
