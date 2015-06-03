@@ -42,7 +42,7 @@ DefaultColors::DefaultColors() {
 
 	mDataTypeFormat.setForeground(Qt::blue);
 	
-	mDecimalFormat.setForeground(Qt::darkYellow);
+	mDecimalFormat.setForeground(Qt::darkRed);
 
 	mBaseNFormat.setForeground(Qt::darkRed);
 	
