@@ -19,6 +19,7 @@
 #include "console.hpp"
 #include "tabwidget.hpp"
 #include "documentitem.hpp"
+#include "syntaxstyle.hpp"
 
 #include "TextEditor/qate/highlighter.h"
 #include "TextEditor/qate/highlightdefinition.h"
@@ -67,6 +68,8 @@ class FrostEdit : public QMainWindow {
 		QFont mFont;
 		int mNewCount;
 		QString mCompiledFile;
+
+		SyntaxStyle mSyntaxStyle;
 	public:
 		static QString gAppName;
 		explicit FrostEdit(QWidget *parent = 0);
@@ -143,6 +146,7 @@ class FrostEdit : public QMainWindow {
 	private:
 
 		int documentSafeClose(Document* );
+		void loadStyleSheet(const QString&);
 
 		void connectTabWidgetFrameSignals(TabWidgetFrame*);
 		void closeEvent(QCloseEvent *);

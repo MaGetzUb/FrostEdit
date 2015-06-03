@@ -91,14 +91,6 @@ FrostEdit::FrostEdit(QWidget *parent) :
 
 	//mHiltDef = mHiltDefManager->definition("Highlighters/frostbasic.xml");
 
-	//QFile style("Stylesheets/stylesheet.css");
-	//if(style.open(QIODevice::ReadOnly | QIODevice::Text)) {
-	//	setStyleSheet(style.readAll());
-	//	style.close();
-	//}
-
-
-
 	mCompileOutput = new Console(ui->ConsoleArea);
 	mCompileOutput->setFont(mFont);
 	mCompileOutput->disconnectSignalsAfterFinishing(false);
@@ -128,9 +120,13 @@ FrostEdit::FrostEdit(QWidget *parent) :
 			QString compiler = QFileDialog::getExistingDirectory(this, tr("Set cbcompiler directory"), tr(""));
 			Settings::set("DefaultCompiler/Path", compiler);
 		}
+		Settings::set("Appearance/StyleSheet", "");
+		Settings::set("Appearance/ColorScheme", "");
+
 		Settings::set("DefaultCompiler/Environment", "");
 		Settings::set("TextEditor/Font", "Lucida Console");
 		Settings::set("TextEditor/FontSize", 10);
+
 		Settings::sync();
 	} else {
 		if(Settings::get("DefaultCompiler/Path").isNull()) {
@@ -199,6 +195,8 @@ void FrostEdit::updateTabHeader(Document* doc, bool b) {
 }
 
 void FrostEdit::updateSettings() {
+	loadStyleSheet(Settings::get("Appearance/StyleSheet", "").toString());
+	mSyntaxStyle.load(Settings::get("Appearance/Colorscheme").toString());
 	mFont.setFamily(Settings::get("TextEditor/Font", "Lucida Console").toString());
 	mFont.setPointSize(Settings::get("TextEditor/FontSize", 10).toInt());
 	Settings::instance().sync();
@@ -255,8 +253,11 @@ void FrostEdit::addEditor(TabWidgetFrame* wid, const QString& str) {
 
 	TextEdit* edit = new TextEdit(wid->tabWidget(), doc);
 	edit->setFont(mFont);
+	mSyntaxStyle.applyToTextEdit(edit);
+
 	wid->tabWidget()->addTab(edit, doc->getDynamicName());
 	wid->tabWidget()->setCurrentIndex(wid->tabWidget()->count()-1);
+
 }
 
 void FrostEdit::removeDocument(Document* doc) {
@@ -421,8 +422,7 @@ Document* FrostEdit::addDocument(const QString& path, bool ghost) {
 	if(mOpenDocuments.contains(loadPath)) {
 		Document* doc = mOpenDocuments[loadPath];
 		return doc;
-	} else
-		return nullptr;
+	}
 
 
 	//If file didn't exists and the path isn't file at all (and it's not ghost), we will make a MessageBox.
@@ -761,7 +761,6 @@ void FrostEdit::pointToIssue(QListWidgetItem* item) {
 	}
 	QString open = path+"/"+issue->getFile();
 
-
 	addEditor(curTabFrameWidget, open);
 
 
@@ -800,7 +799,8 @@ void FrostEdit::interpretCompileOut(QString line) {
 void FrostEdit::setUpDocumentHiltter(Document* doc) {
 
 	TextEditor::Internal::Highlighter* hilt = new Fate::Highlighter();
-	Qate::DefaultColors::ApplyToHighlighter(hilt);
+	//Qate::DefaultColors::ApplyToHighlighter(hilt);
+	mSyntaxStyle.applyToHighlighter(hilt);
 	QSharedPointer<TextEditor::Internal::HighlightDefinition> ptr = mHiltDefManager->definition("Highlighters/frostbasic.xml");
 	if(!ptr.isNull())
 		hilt->setDefaultContext(ptr->initialContext());
@@ -970,6 +970,18 @@ int FrostEdit::documentSafeClose(Document* doc) {
 
 	}
 }
+
+void FrostEdit::loadStyleSheet(const QString& sheet) {
+	qDebug() << sheet;
+	if(sheet.isEmpty())
+		setStyleSheet("");
+	QFile style(sheet);
+	if(style.open(QIODevice::ReadOnly | QIODevice::Text)) {
+		setStyleSheet(style.readAll());
+		style.close();
+	}
+}
+
 
 void FrostEdit::connectTabWidgetFrameSignals(TabWidgetFrame* tab) {
 	connect(tab->tabWidget(), SIGNAL(currentChanged(TabWidget*, int)), this, SLOT(updateDocumentSelection(TabWidget*, int)));
