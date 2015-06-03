@@ -12,7 +12,6 @@ QWidget
 	background-color: QLinearGradient( x1: 0, y1: 1, x2: 0, y2: 0, stop: 0 #000008, stop: 1 #000024);
 }
 
-
 QWidget:item:hover
 {
     background-color: QLinearGradient( x1: 0, y1: 1.0, x2: 0, y2: 0, stop: 0.0 #0000010, stop: 0.85 #000036, stop: 1.0 #00AADD);
@@ -281,7 +280,7 @@ QMainWindow::separator:hover
 }
 
 QToolBar {
-    background: red;
+    background: #001144;
     border: 1px solid #283246;
 }
 
