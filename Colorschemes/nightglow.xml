@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<style-scheme version="1.0" name="Nightglow">
+  <style name="Text" foreground="#6b97dc" background="#000018"/>
+  <style name="Link" foreground="#aaaa00"/>
+  <style name="Selection" foreground="#aaffff" background="#335a7f"/>
+  <style name="SearchResult" foreground="#822676" background="#7785ff"/>
+  <style name="SearchScope" foreground="#000000" background="#f5faff"/>
+  <style name="Parentheses" foreground="#ff0000"/>
+  <style name="CurrentLine" foreground="#000000" background="#c2e1ff"/>
+  <style name="SimilarOccurance" foreground="#ffffff" background="#00c8ff"/>
+  <style name="RegionVisualizer" foreground="#96a0be" background="#283246"/>
+  <style name="RegionVisualizerSelected" foreground="#bea000" background="#463228"/>
+  <style name="LineNumber" foreground="#96a0be" background="#283246"/>
+  <style name="Number" foreground="#ff9b9b"/>
+  <style name="String" foreground="#00ffff"/>
+  <style name="Char" foreground="#00ffff"/>
+  <style name="Type" foreground="#983132" bold="true" italic="true"/>
+  <style name="Local" foreground="#76328c"/>
+  <style name="Field" foreground="#ba7ce1"/>
+  <style name="Function" foreground="#ee6600"/>
+  <style name="Keyword" foreground="#0044ff" bold="false"/>
+  <style name="Datatype" foreground="#0044ff" bold="false" italic="true"/>
+  <style name="Operator" foreground="#66bbcc"/>
+  <style name="Label" foreground="#800000"/>
+  <style name="Comment" foreground="#bc0000" italic="true"/>
+</style-scheme>
