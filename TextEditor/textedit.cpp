@@ -265,7 +265,7 @@ TextEdit::TextEdit(QWidget *parent):
 	mLineNumberFormat.setBackground(QColor(Qt::lightGray));
 	mLineNumberFormat.setForeground(QColor(Qt::lightGray).dark(180));
 
-	mRegionVisualizerFormat.setForeground(QColor(Qt::lightGray).dark(180));
+	mRegionVisualizerFormat.setForeground(QColor(Qt::lightGray).dark(100));
 	mRegionVisualizerFormat.setBackground(QColor(Qt::white));
 	mRegionVisualizerSelectedFormat.setForeground(QColor(Qt::red));
 	mRegionVisualizerSelectedFormat.setBackground(QColor(Qt::white));
@@ -820,7 +820,7 @@ void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *e) {
 
 	QPainter painter(mLineNumberWidget);
 	painter.fillRect(e->rect(), mLineNumberFormat.background().color());
-	painter.fillRect(e->rect().right()-space*2, e->rect().top(), e->rect().right(), e->rect().bottom(), mLineNumberFormat.background().color().dark());
+	painter.fillRect(e->rect().right()-space*2, e->rect().top(), e->rect().right(), e->rect().bottom(), mLineNumberFormat.background().color().dark(130));
 	//int blockid = 0;
 
 	while (block.isValid() && top <= e->rect().bottom()) {
