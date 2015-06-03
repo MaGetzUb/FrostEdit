@@ -11,66 +11,11 @@ namespace Fate {
 
 namespace Utils {
 
-	static inline bool isSpace(QChar c) {return c == ' ' || c == '\t';}
-    static inline bool isLetter(QChar c) {return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');}
-	static inline bool isUnderScore(QChar c) {return c == '_';}
-	static inline bool isDigit(QChar c) {return c >= '0' && c <= '9';}
-	static inline bool isSeparator(QChar c) {
-			if(c == '.')
-				return true;
-			else if(c == '(')
-				return true;
-			else if(c == ')')
-				return true;
-			else if(c == ':')
-				return true;
-			else if(c == '!')
-				return true;
-			else if(c == '+')
-				return true;
-			else if(c == ',')
-				return true;
-			else if(c == '-')
-				return true;
-			else if(c == '<')
-				return true;
-			else if(c == '=')
-				return true;
-			else if(c == '>')
-				return true;
-			else if(c == '%')
-				return true;
-			else if(c == '&')
-				return true;
-			else if(c == '/')
-				return true;
-			else if(c == ';')
-				return true;
-			else if(c == '?')
-				return true;
-			else if(c == '[')
-				return true;
-			else if(c == ']')
-				return true;
-			else if(c == '^')
-				return true;
-			else if(c == '{')
-				return true;
-			else if(c == '|')
-				return true;
-			else if(c == '}')
-				return true;
-			else if(c == '~')
-				return true;
-			else if(c == '\\')
-				return true;
-			else if(c == '*')
-				return true;
-			else if(c == ',')
-				return true;
-			else
-				return false;
-	}
+	inline bool isSpace(QChar c) {return c == ' ' || c == '\t';}
+	inline bool isLetter(QChar c) {return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');}
+	inline bool isUnderScore(QChar c) {return c == '_';}
+	inline bool isDigit(QChar c) {return c >= '0' && c <= '9';}
+	extern bool isSeparator(QChar c);
 
 	static inline bool letterCmp(QChar a, QChar b, bool underscores, bool sensitive = false) {
 		if(underscores)
@@ -163,7 +108,6 @@ using namespace TextEditor::Internal;
 
 
 
-
 class FateHighlighter : public Highlighter {
 	Q_OBJECT
 
@@ -172,13 +116,10 @@ class FateHighlighter : public Highlighter {
 	QTextCharFormat mStructureFmt;
 	QTextCharFormat mFieldFmt;
 	QTextCharFormat mFunctionFmt;
+	//QTextCharFormat mParentheseFmt;
+	QTextCharFormat mOperatorFmt;
+
 	IdentStructure* mStructure;
-
-	void testStructures(const QString&, Document* doc);
-	void testVariables(const QString&, Document* doc);
-	void testFunctions(const QString&, Document* doc);
-
-
 	int mProgress;
 
 
@@ -189,6 +130,9 @@ class FateHighlighter : public Highlighter {
 	public:
 		FateHighlighter(Document* parent = 0);
 		Document* document();
+
+		//void setParentheseFormat(const QTextCharFormat&);
+		void setOperatorFmt(const QTextCharFormat&);
 
 	protected:
 		virtual void highlightBlock(const QString &text);

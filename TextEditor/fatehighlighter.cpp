@@ -3,6 +3,65 @@
 #include <QRegularExpression>
 #include <QDebug>
 namespace Fate {
+namespace Utils {
+bool isSeparator(QChar c) {
+	if(c == '.')
+		return true;
+	else if(c == '(')
+		return true;
+	else if(c == ')')
+		return true;
+	else if(c == ':')
+		return true;
+	else if(c == '!')
+		return true;
+	else if(c == '+')
+		return true;
+	else if(c == ',')
+		return true;
+	else if(c == '-')
+		return true;
+	else if(c == '<')
+		return true;
+	else if(c == '=')
+		return true;
+	else if(c == '>')
+		return true;
+	else if(c == '%')
+		return true;
+	else if(c == '&')
+		return true;
+	else if(c == '/')
+		return true;
+	else if(c == ';')
+		return true;
+	else if(c == '?')
+		return true;
+	else if(c == '[')
+		return true;
+	else if(c == ']')
+		return true;
+	else if(c == '^')
+		return true;
+	else if(c == '{')
+		return true;
+	else if(c == '|')
+		return true;
+	else if(c == '}')
+		return true;
+	else if(c == '~')
+		return true;
+	else if(c == '\\')
+		return true;
+	else if(c == '*')
+		return true;
+	else if(c == ',')
+		return true;
+	else
+		return false;
+}
+}
+
 
 
 
@@ -15,6 +74,7 @@ FateHighlighter::FateHighlighter(Document* parent):
 	mStructureFmt.setForeground(QBrush(Qt::darkMagenta));
 	mFunctionFmt.setForeground(QBrush(Qt::darkGreen));
 	mFieldFmt.setForeground(QBrush(Qt::darkCyan));
+	mOperatorFmt.setForeground(QBrush(QColor(128, 128, 192)));
 }
 
 
@@ -22,28 +82,22 @@ Document* FateHighlighter::document() {
 	return qobject_cast<Document*>(QSyntaxHighlighter::document());
 }
 
+void FateHighlighter::setOperatorFmt(const QTextCharFormat& fmt) {
+	mOperatorFmt = fmt;
+}
+
 void FateHighlighter::highlightBlock(const QString &text) {
+	for(int i = 0; i < text.length(); i++) {
+		if(Utils::isSeparator(text[i])) {
+			setFormat(i, 1, mOperatorFmt);
+		}
+	}
 	Highlighter::highlightBlock(text);
 
-	Document* doc = document();
+
+}
 
 
 
 }
 
-
-void FateHighlighter::testStructures(const QString& s, Document* doc) {
-
-}
-
-void FateHighlighter::testVariables(const QString& s, Document* doc) {
-
-}
-
-void FateHighlighter::testFunctions(const QString& s, Document* doc) {
-
-
-
-}
-
-}
