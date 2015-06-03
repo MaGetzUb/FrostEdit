@@ -4,16 +4,13 @@
 #include <QtXml>
 #include <QTextCharFormat>
 #include "TextEditor/qate/defaultcolors.h"
-#include "TextEditor/qate/highlighter.h"
+#include "TextEditor/fatehighlighter.hpp"
 #include "TextEditor/textedit.hpp"
 
 class SyntaxStyle {
 	QTextCharFormat mBasicTextFormat;
 	QTextCharFormat mKeywordFormat;
 	QTextCharFormat mDataTypeFormat;
-	QTextCharFormat mDecimalFormat;
-	QTextCharFormat mBaseNFormat;
-	QTextCharFormat mFloatFormat;
 	QTextCharFormat mCharFormat;
 	QTextCharFormat mStringFormat;
 	QTextCharFormat mCommentFormat;
@@ -22,10 +19,15 @@ class SyntaxStyle {
 	QTextCharFormat mFunctionFormat;
 	QTextCharFormat mRegionMarkerFormat;
 	QTextCharFormat mOthersFormat;
+	QTextCharFormat mOperator;
+	QTextCharFormat mNumberFormat;
+	QTextCharFormat mSelection;
+	//TextEdit colors:
 	QTextCharFormat mLineNumber;
 	QTextCharFormat mSimilarOccurance;
 	QTextCharFormat mRegionVisualizer;
 	QTextCharFormat mRegionVisualizerSelected;
+
 
 	QString mFile;
 	QDomDocument mXMLDoc;

@@ -19,9 +19,6 @@ void SyntaxStyle::loadDefaults() {
 	mBasicTextFormat.setBackground(Qt::white);
 	mKeywordFormat = DefaultColors::instance().keywordFormat();
 	mDataTypeFormat = DefaultColors::instance().dataTypeFormat();
-	mDecimalFormat = DefaultColors::instance().decimalFormat();
-	mBaseNFormat = DefaultColors::instance().baseNFormat();
-	mFloatFormat = DefaultColors::instance().floatFormat();
 	mCharFormat = DefaultColors::instance().charFormat();
 	mStringFormat = DefaultColors::instance().stringFormat();
 	mCommentFormat = DefaultColors::instance().commentFormat();
@@ -74,9 +71,9 @@ bool SyntaxStyle::save(const QString& path) {
 void SyntaxStyle::applyToHighlighter(TextEditor::Internal::Highlighter* hiltter) {
 	hiltter->configureFormat(TextEditor::Internal::Highlighter::Keyword, mKeywordFormat);
 	hiltter->configureFormat(TextEditor::Internal::Highlighter::DataType, mDataTypeFormat);
-	hiltter->configureFormat(TextEditor::Internal::Highlighter::Decimal, mDecimalFormat);
-	hiltter->configureFormat(TextEditor::Internal::Highlighter::BaseN, mBaseNFormat);
-	hiltter->configureFormat(TextEditor::Internal::Highlighter::Float, mFloatFormat);
+	hiltter->configureFormat(TextEditor::Internal::Highlighter::Decimal, mNumberFormat);
+	hiltter->configureFormat(TextEditor::Internal::Highlighter::BaseN, mNumberFormat);
+	hiltter->configureFormat(TextEditor::Internal::Highlighter::Float, mNumberFormat);
 	hiltter->configureFormat(TextEditor::Internal::Highlighter::Char, mCharFormat);
 	hiltter->configureFormat(TextEditor::Internal::Highlighter::String, mStringFormat);
 	hiltter->configureFormat(TextEditor::Internal::Highlighter::Comment, mCommentFormat);
@@ -85,6 +82,12 @@ void SyntaxStyle::applyToHighlighter(TextEditor::Internal::Highlighter* hiltter)
 	hiltter->configureFormat(TextEditor::Internal::Highlighter::Function, mFunctionFormat);
 	hiltter->configureFormat(TextEditor::Internal::Highlighter::RegionMarker, mRegionMarkerFormat);
 	hiltter->configureFormat(TextEditor::Internal::Highlighter::Others, mOthersFormat);
+
+	Fate::FateHighlighter* fHiltter = qobject_cast<Fate::FateHighlighter*>(hiltter);
+	if(fHiltter != nullptr) {
+		fHiltter->setOperatorFmt(mOperator);
+	}
+
 }
 
 void SyntaxStyle::applyToTextEdit(TextEdit* edit) {
@@ -93,6 +96,8 @@ void SyntaxStyle::applyToTextEdit(TextEdit* edit) {
 	palette.setBrush(QPalette::Inactive, QPalette::Base, mBasicTextFormat.background());
 	palette.setBrush(QPalette::Active, QPalette::Text, mBasicTextFormat.foreground());
 	palette.setBrush(QPalette::Inactive, QPalette::Text, mBasicTextFormat.foreground());
+	palette.setBrush(QPalette::Highlight, mSelection.background());
+	palette.setBrush(QPalette::HighlightedText, mSelection.foreground());
 	edit->setPalette(palette);
 
 	edit->setLineNumberFormat(mLineNumber);
@@ -109,11 +114,7 @@ QTextCharFormat*SyntaxStyle::formatByName(const QString& str) {
 	else if(str == "Datatype")
 		return &mDataTypeFormat;
 	else if(str == "Number")
-		return &mDecimalFormat;
-	else if(str == "BaseN")
-		return &mBaseNFormat;
-	else if(str == "Float")
-		return &mFloatFormat;
+		return &mNumberFormat;
 	else if(str == "Char")
 		return &mCharFormat;
 	else if(str == "String")
@@ -138,6 +139,10 @@ QTextCharFormat*SyntaxStyle::formatByName(const QString& str) {
 		return &mRegionVisualizer;
 	else if(str == "RegionVisualizerSelected")
 		return &mRegionVisualizerSelected;
+	else if(str == "Operator")
+		return &mOperator;
+	else if(str == "Selection")
+		return &mSelection;
 	return nullptr;
 }
 
@@ -152,7 +157,7 @@ void SyntaxStyle::readScheme(QDomElement element) {
 				QString foreground = elem.attribute("foreground");
 				QString background = elem.attribute("background");
 				QString bold = elem.attribute("bold", "false");
-				QString italic = elem.attribute("bold", "false");
+				QString italic = elem.attribute("italic", "false");
 
 				qDebug() << name << foreground << background << bold << italic;
 
