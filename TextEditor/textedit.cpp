@@ -354,11 +354,10 @@ void TextEdit::drawIndentationPipes(QPainter& painter, QTextBlock& block, int to
 	int spaceStep = (int)(float(space)/5.0f);
 	int regionid;
 	int nextregion;
+	painter.setPen(fmt.foreground().color());
 	if(startsRegion(block, regionid)) {
 		QRect rect(lineNumberAreaWidth() - space - size/2, top+blockheight/2 - size/2, size, size);
 		painter.fillRect(rect, fmt.background().color());
-
-		painter.setPen(fmt.foreground().color());
 		painter.drawRect(rect);
 		if(nextblock.isValid()) {
 			if(nextblock.isVisible()) {
@@ -369,6 +368,7 @@ void TextEdit::drawIndentationPipes(QPainter& painter, QTextBlock& block, int to
 			}
 		}
 	} else if(endsRegion(block, regionid, nextregion) && regionid != 0 && nextregion != 0) {
+		painter.setPen(fmt.foreground().color());
 		painter.drawLine(lineNumberAreaWidth() - space, top+blockheight/2, lineNumberAreaWidth(), top+blockheight/2);
 		painter.drawLine(lineNumberAreaWidth() - space, top, lineNumberAreaWidth() - space, bottom);
 	} else if(endsRegion(block, regionid, nextregion) && regionid != 0 && nextregion == 0 ) {
@@ -806,7 +806,7 @@ void TextEdit::updateDocumentLength(int ) {
 void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *e) {
 
 	QPainter painter(mLineNumberWidget);
-	painter.fillRect(e->rect(), mLineNumberFormat.background());
+	painter.fillRect(e->rect(), mLineNumberFormat.background().color());
 	int space = fontMetrics().width(QLatin1Char('_'));
 
 
@@ -817,6 +817,7 @@ void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *e) {
 	int bottom = top + (int) blockBoundingRect(block).height();
 
 	//int blockid = 0;
+
 	while (block.isValid() && top <= e->rect().bottom()) {
 
 		int blockheight = blockBoundingRect(block).height();
@@ -839,11 +840,10 @@ void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *e) {
 			if(block.userData() != nullptr) {
 				drawBookMark(painter, block, top, bottom, space);
 				drawModification(painter, block, top, bottom, space);
-				QTextCharFormat pipeFormat = mRegionVisualizerFormat;
-				if(!mRegionUnderCursor.isEmpty())
-					if(mRegionUnderCursor.contains(block))
-							pipeFormat = mRegionVisualizerSelectedFormat;
-				drawIndentationPipes(painter, block, top, bottom, space, pipeFormat);
+				if(!mRegionUnderCursor.isEmpty() && mRegionUnderCursor.contains(block))
+						drawIndentationPipes(painter, block, top, bottom, space, mRegionVisualizerSelectedFormat);
+				else
+						drawIndentationPipes(painter, block, top, bottom, space, mRegionVisualizerFormat);
 			}
 
 
