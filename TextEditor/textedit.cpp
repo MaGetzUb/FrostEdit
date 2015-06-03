@@ -238,7 +238,8 @@ TextEdit::TextEdit(QWidget *parent):
 	QPlainTextEdit(parent),
 	mParentWidget(parent),
 	mClicked(false),
-	mIsBlockSelection(false)
+	mIsBlockSelection(false),
+	mFont(font())
 {
 	setMouseTracking(true);
 	setLineWrapMode(QPlainTextEdit::NoWrap);
@@ -281,6 +282,7 @@ TextEdit::TextEdit(QWidget* parent, Document* doc):
 
 	initCompleter();
 }
+
 
 void TextEdit::lineNumberAreaMousePressEvent(QMouseEvent* e) {
 
@@ -591,6 +593,7 @@ void TextEdit::wheelEvent(QWheelEvent* e) {
 		return;
 	}
 	QPlainTextEdit::wheelEvent(e);
+	QPlainTextEdit::setFont(mFont);
 	viewport()->update();
 }
 
@@ -805,8 +808,7 @@ void TextEdit::updateDocumentLength(int ) {
 
 void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *e) {
 
-	QPainter painter(mLineNumberWidget);
-	painter.fillRect(e->rect(), mLineNumberFormat.background().color());
+
 	int space = fontMetrics().width(QLatin1Char('_'));
 
 
@@ -816,6 +818,9 @@ void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *e) {
 	int top = (int) blockBoundingGeometry(block).translated(contentOffset()).top();
 	int bottom = top + (int) blockBoundingRect(block).height();
 
+	QPainter painter(mLineNumberWidget);
+	painter.fillRect(e->rect(), mLineNumberFormat.background().color());
+	painter.fillRect(e->rect().right()-space*2, e->rect().top(), e->rect().right(), e->rect().bottom(), mLineNumberFormat.background().color().dark());
 	//int blockid = 0;
 
 	while (block.isValid() && top <= e->rect().bottom()) {
@@ -826,14 +831,17 @@ void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *e) {
 //			grad.setFinalStop(0, top);
 //			painter.fillRect(0, top, (mLineNumberWidget->width()), fontMetrics().height(), QBrush(QColor(255, 255, 255, 96)));
 //		}
-
 		if (block.isVisible() && bottom >= e->rect().top()) {
 
 
 
 			QString number = QString::number(blockNumber + 1);
-
 			painter.setPen(mLineNumberFormat.foreground().color());
+			QFont fnt = font();
+			fnt.setBold(mLineNumberFormat.font().bold());
+			fnt.setItalic(mLineNumberFormat.font().italic());
+
+			painter.setFont(fnt);
 			painter.drawText(0, top, lineNumberAreaWidth() - space*2 - 4, fontMetrics().height(), Qt::AlignRight, number);
 
 
@@ -919,7 +927,8 @@ void TextEdit::setRegionVisualizerSelectedFormat(const QTextCharFormat& fmt) {
 }
 
 void TextEdit::setFont(const QFont& fnt) {
-	QPlainTextEdit::setFont(fnt);
+	mFont = fnt;
+	QPlainTextEdit::setFont(mFont);
 	QFontMetrics metrics(font());
 	setTabStopWidth(metrics.width(' ')*gVirtualTabSize);
 }

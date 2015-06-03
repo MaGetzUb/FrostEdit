@@ -78,11 +78,13 @@ class TextEdit : public QPlainTextEdit {
 
 		TextBlockSelection mBlockSelection;
 		bool mIsBlockSelection;
+
+		QFont mFont;
+
 	public:
 		explicit TextEdit(QWidget* parent = 0);
 		explicit TextEdit(QWidget* parent, Document* doc);
 		~TextEdit();
-
 
 		void initCompleter();
 		void setTabSettings(const TextEditor::TabSettings& settings);
