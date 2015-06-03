@@ -798,7 +798,7 @@ void FrostEdit::interpretCompileOut(QString line) {
 
 void FrostEdit::setUpDocumentHiltter(Document* doc) {
 
-	TextEditor::Internal::Highlighter* hilt = new Fate::Highlighter();
+	TextEditor::Internal::Highlighter* hilt = new Fate::FateHighlighter();
 	//Qate::DefaultColors::ApplyToHighlighter(hilt);
 	mSyntaxStyle.applyToHighlighter(hilt);
 	QSharedPointer<TextEditor::Internal::HighlightDefinition> ptr = mHiltDefManager->definition("Highlighters/frostbasic.xml");
