@@ -223,6 +223,7 @@ void FrostEdit::addEditor(QListWidgetItem* item) {
 
 	TextEdit* edit = new TextEdit(mCurrentTabWidget, doc);
 	edit->setFont(mFont);
+	mSyntaxStyle.applyToTextEdit(edit);
 	mCurrentTabWidget->addTab(edit, doc->getDynamicName());
 	mCurrentTabWidget->setCurrentIndex(mCurrentTabWidget->count()-1);
 }
@@ -486,8 +487,11 @@ void FrostEdit::on_actionSave_As_triggered() {
 
 
 void FrostEdit::on_closeDocument_clicked() {
+	if(ui->openFilesWidget->currentItem() == nullptr)
+		return;
 	DocumentItem* item = static_cast<DocumentItem*>(ui->openFilesWidget->currentItem());
 	Document* doc = item->getDocument();
+
 	int ans = documentSafeClose(doc);
 	if(ans == 0 || ans == 1)
 		removeDocument(doc);
@@ -593,14 +597,6 @@ void FrostEdit::split(TabWidgetFrame* tab, Qt::Orientation orient) {
 
 
 	connectTabWidgetFrameSignals(mTabWidgetFrames.last());
-	//connect(mTabWidgetFrames.last()->tabWidget(), SIGNAL(currentChanged(TabWidget*, int)), this, SLOT(updateDocumentSelection(TabWidget*, int)));
-	//connect(mTabWidgetFrames.last()->tabWidget(), SIGNAL(currentChanged(TabWidget*, int)), this, SLOT(changeTitle(TabWidget*, int)));
-	//connect(mTabWidgetFrames.last()->tabWidget(), SIGNAL(tabCloseRequested(TabWidget*,int)), this, SLOT(closeTab(TabWidget*, int)));
-	//connect(mTabWidgetFrames.last(), SIGNAL(close(TabWidgetFrame*)), this, SLOT(closeTabWidgetFrame(TabWidgetFrame*)));
-	//connect(mTabWidgetFrames.last(), SIGNAL(splitHorizontally(TabWidgetFrame*)), this, SLOT(splitHorizontally(TabWidgetFrame*)));
-	//connect(mTabWidgetFrames.last(), SIGNAL(splitVertically(TabWidgetFrame*)), this, SLOT(splitVertically(TabWidgetFrame*)));
-	//connect(mTabWidgetFrames.last(), SIGNAL(openToNewWindow(TabWidgetFrame*)), this, SLOT(openToNewWindow(TabWidgetFrame*)));
-	//connect(mTabWidgetFrames.last(), SIGNAL(itemChanged(TabWidgetFrame*,QString)), this, SLOT(addEditor(TabWidgetFrame*,QString)));
 
 	for(Document* doc: mOpenDocuments)
 		if(doc != nullptr)
@@ -969,6 +965,7 @@ int FrostEdit::documentSafeClose(Document* doc) {
 		}
 
 	}
+	return 1;
 }
 
 void FrostEdit::loadStyleSheet(const QString& sheet) {
