@@ -30,10 +30,18 @@ void SyntaxStyle::loadDefaults() {
 	mFunctionFormat = DefaultColors::instance().functionFormat();
 	mRegionMarkerFormat = DefaultColors::instance().regionMarkerFormat();
 	mOthersFormat = DefaultColors::instance().othersFormat();
+	mLineNumber.setForeground(QColor(Qt::gray).dark(180));
+	mLineNumber.setBackground(QColor(Qt::gray));
+	mSimilarOccurance.setForeground(QColor(255, 255, 255));
+	mSimilarOccurance.setBackground(QColor(0, 200, 255));
+	mRegionVisualizer.setForeground(QColor(Qt::gray).dark(180));
+	mRegionVisualizer.setBackground(QColor(255, 255, 255));
+	mRegionVisualizerSelected.setForeground(QColor(Qt::red));
+	mRegionVisualizerSelected.setBackground(QColor(255, 255, 255));
 }
 
 bool SyntaxStyle::load(const QString& path) {
-
+	mXMLDoc.clear();
 	QFile file(path);
 	if(file.open(QIODevice::ReadOnly | QIODevice::Text)) {
 		mFile = path;
