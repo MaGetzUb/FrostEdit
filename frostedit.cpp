@@ -37,13 +37,6 @@ FrostEdit::FrostEdit(QWidget *parent) :
 	mHiltDefManager(Qate::HighlightDefinitionManager::instance()),
 	mFrostCompilerErrorRegEx("\\\"(.*)\\\"\\s+\\[\\s*(\\d+)\\,\\s*(\\d*)\\s*\\]\\s+(Warning|Error)\\s+(\\d+)\\:\\s+(.*)")
 {
-	mFont.setFixedPitch(true);
-	mFont.setPointSize(8);
-	mFont.setStyleHint(QFont::Monospace);
-
-
-
-
 
 	mDocumentWatcher = new QFileSystemWatcher(this);
 	connect(mDocumentWatcher, SIGNAL(fileChanged(QString)), this, SLOT(fileChangedOutside(QString)));
@@ -399,6 +392,9 @@ void FrostEdit::currentTabPageChanged(int id) {
 		ui->actionCompileAndRun->setDisabled(true);
 		ui->actionSave->setDisabled(true);
 		ui->actionSave_As->setDisabled(true);
+
+		ui->compile->setDisabled(true);
+		ui->compile_build->setDisabled(true);
 	} else { //there was editor, enable them
 		ui->actionCopy->setEnabled(true);
 		ui->actionCut->setEnabled(true);
@@ -409,6 +405,8 @@ void FrostEdit::currentTabPageChanged(int id) {
 		ui->actionCompileAndRun->setEnabled(true);
 		ui->actionSave->setEnabled(true);
 		ui->actionSave_As->setEnabled(true);
+		ui->compile->setEnabled(true);
+		ui->compile_build->setEnabled(true);
 	}
 }
 
@@ -1006,4 +1004,18 @@ void FrostEdit::closeEvent(QCloseEvent* e) {
 	}
 
 	e->accept();
+}
+
+void FrostEdit::on_close_clicked() {
+
+	Console* c = qobject_cast<Console*>(mApplicationOutput->currentWidget());
+	if(c != nullptr) {
+		QProcess* proc = c->getProcess();
+		if(proc != nullptr) {
+			if(c->running())
+				c->closeProcess();
+			mRunningApplication.removeAt(mRunningApplication.indexOf(proc));
+			delete proc;
+		}
+	}
 }

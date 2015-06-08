@@ -140,6 +140,8 @@ class FrostEdit : public QMainWindow {
 		void on_actionRun_triggered();
 
 
+		void on_close_clicked();
+
 	signals:
 		void tabWidgetChanged(TabWidget*);
 		void documentChanged(Document*);
