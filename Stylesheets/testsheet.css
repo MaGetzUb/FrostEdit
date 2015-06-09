@@ -12,6 +12,11 @@ QWidget
 	background-color: QLinearGradient( x1: 0, y1: 1, x2: 0, y2: 0, stop: 0 #000008, stop: 1 #000024);
 }
 
+QLabel 
+{
+	background: transparent;
+}
+
 QWidget:item:hover {
 	color: #fff;
     background-color: #0099EE;
