@@ -16,6 +16,7 @@
 #include <QContextMenuEvent>
 #include <QWheelEvent>
 
+#include "syntaxstyle.hpp"
 #include "qate/qateblockdata.h"
 #include "qate/tabsettings.h"
 class TextBlockSelection {
@@ -45,11 +46,10 @@ class TextBlockSelection {
 
 
 
-
+class SyntaxStyle;
 class LineNumberArea;
 class TextBlockUserData;
 class TextEdit : public QPlainTextEdit {
-
 		Q_OBJECT
 		QWidget* mLineNumberWidget;
 		QWidget* mDocumentWatcher;
@@ -75,9 +75,13 @@ class TextEdit : public QPlainTextEdit {
 		QTextCharFormat mCurrentLine;
 		QTextCharFormat mRegionVisualizerFormat;
 		QTextCharFormat mRegionVisualizerSelectedFormat;
+		QTextCharFormat mSelectedParenthesis;
+		QTextCharFormat mErrorUnderlineFormat;
 
 		TextBlockSelection mBlockSelection;
 		bool mIsBlockSelection;
+
+		SyntaxStyle* mSyntaxStyle;
 
 		QFont mFont;
 
@@ -86,11 +90,13 @@ class TextEdit : public QPlainTextEdit {
 		explicit TextEdit(QWidget* parent, Document* doc);
 		~TextEdit();
 
+
 		void initCompleter();
 		void setTabSettings(const TextEditor::TabSettings& settings);
 
 		void lineNumberAreaPaintEvent(QPaintEvent*);
 		void documentWatchPaintEvent(QPaintEvent*);
+		LineNumberArea* lineNumberArea();
 
 		const QString textUnderCursor();
 
@@ -102,6 +108,8 @@ class TextEdit : public QPlainTextEdit {
 		void setSelectedLine(const QTextCharFormat& fmt);
 		void setRegionVisualizerFormat(const QTextCharFormat& fmt);
 		void setRegionVisualizerSelectedFormat(const QTextCharFormat& fmt);
+		void setmSelectedParenthesisFormat(const QTextCharFormat& fmt);
+		void setErrorUnderlineFormat(const QTextCharFormat& fmt);
 
 		void setFont(const QFont &);
 
@@ -132,13 +140,22 @@ class TextEdit : public QPlainTextEdit {
 		void setBlocksVisible(QList<QTextBlock>& blocks, bool visible);
 		void updateHeight();
 	private:
+
+
+		QPair<int, int> searchCounterBracket(int pos);
+
 		void drawIndentationPipes(QPainter&, QTextBlock&, int top, int bottom, int space, const QTextCharFormat&);
 		void drawBookMark(QPainter&, QTextBlock&, int top, int bottom, int space);
 		void drawModification(QPainter&, QTextBlock&, int top, int bottom, int space);
+		void autoIndentCursor(QTextCursor&);
+		void updateFont();
 
 		bool startsRegion(const QTextBlock&, int&);
+		inline bool startsRegion(const QTextBlock& block) {int tmp; return startsRegion(block, tmp);}
 		bool endsRegion(const QTextBlock&, int&, int&);
+		inline bool endsRegion(const QTextBlock& block) {int a, b; return endsRegion(block, a, b);}
 		bool endsRegion(const QTextBlock&, int&, int&, bool&);
+		inline bool endsRegion(const QTextBlock& block, bool& perfect) {int a, b; return endsRegion(block, a, b, perfect);}
 		bool continuesRegion(QTextBlock&, int&);
 		Document* toDocument(QTextDocument* doc);
 	protected:
@@ -204,8 +221,7 @@ class LineNumberArea : public QWidget {
 		TextEdit *mTextEdit;
 		QAction* mBookMarkAction;
 		QAction* mBreakPointAction;
-
-
+		bool mIsSelection;
 	public:
 		LineNumberArea(TextEdit *editor):
 			QWidget(editor),

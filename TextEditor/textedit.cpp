@@ -18,6 +18,13 @@
 int TextEdit::gVirtualTabSize = 5;
 using namespace TextEditor::Internal;
 
+struct Parenthese {
+	int pos;
+	int id;
+	int handedness;
+};
+
+
 
 void TextBlockSelection::moveAnchor(int blockNumber, int visualColumn) {
 	if (visualColumn >= 0) {
@@ -137,6 +144,8 @@ void TextEdit::customTextModification(QKeyEvent* e) {
 					viewport()->update();
 				}
 				QPlainTextEdit::keyPressEvent(e);
+				e->accept();
+				return;
 			}
 		break;
 		case Qt::Key_Backspace:{
@@ -146,39 +155,59 @@ void TextEdit::customTextModification(QKeyEvent* e) {
 			if(startsRegion(block, tmp1)) {
 				QList<QTextBlock> blocks = getRegionSubBlocks(block.next());
 				setBlocksVisible(blocks, true);
-			}
-			QTextCursor decim = cur;
-			QPlainTextEdit::keyPressEvent(e);
-
-		}break;
-		case Qt::Key_Return:
-		case Qt::Key_Enter: {
-			QTextCursor cur = textCursor();
-			QTextBlock block = cur.block();
-			int tmp1, tmp2;
-			if(startsRegion(block, tmp1)) {
-				QList<QTextBlock> blocks = getRegionSubBlocks(block.next());
+			} else if(endsRegion(block)) {
+				QList<QTextBlock> blocks = getRegionSubBlocks(block.previous());
 				setBlocksVisible(blocks, true);
 			}
 			QTextCursor decim = cur;
 			QPlainTextEdit::keyPressEvent(e);
+			e->accept();
+			return;
+		}break;
+		case Qt::Key_Return:
+		case Qt::Key_Enter: {
+			QTextCursor cur = textCursor();
 
+			QTextBlock block = cur.block();
 
-			bool perfect;
-			if(endsRegion(cur.block().previous(), tmp1, tmp2, perfect) && perfect) {
-				decim.movePosition(QTextCursor::Up, QTextCursor::MoveAnchor);
-				decim.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
-				decim.movePosition(QTextCursor::NextWord, QTextCursor::KeepAnchor);
-				decim.removeSelectedText();
-				TextBlockUserData* data = blockData(decim.block().next());
-				decim.insertText(QString(data->getFoldingIndent(), QChar::Tabulation));
+			if(blockData(block)->isRegionStart()) {
+				QList<QTextBlock> blocks = getRegionSubBlocks(block.next());
+				setBlocksVisible(blocks, true);
+			}
+			bool newline = false;
+			if(blockData(block)->isRegionEnd() && blockData(block)->foldingIndent() > 0) {
+				//cur.movePosition(QTextCursor::EndOfLine, QTextCursor::MoveAnchor);
+				//cur.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+				//cur.movePosition(QTextCursor::NextWord, QTextCursor::MoveAnchor);
+				//cur.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+				QString txt =  block.text().trimmed();
+				cur = textCursor();
+				int folding = blockData(cur.block())->foldingIndent();
+				int earlierPos = cur.positionInBlock();
+				cur.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+				cur.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+				cur.removeSelectedText();
+				qDebug() << earlierPos;
+				qDebug() << folding;
+				if(earlierPos == folding-1) {
+					newline = true;
+					cur.insertText("\n");
+					setTextCursor(cur);
+				}
+				cur.insertText(QString(blockData(block)->foldingIndent()-1, QChar(QChar::Tabulation)));
+				cur.insertText(txt);
+				cur = textCursor();
+				if(newline) {
+					e->accept();
+					return;
+				}
 			}
 
-
-			//Let's add indentation to new line
-			TextBlockUserData* data = blockData(cur.block());
-			cur.insertText(QString(data->getFoldingIndent(), QChar::Tabulation));
+			cur.insertText("\n");
+			block = cur.block();
+			cur.insertText(QString(blockData(block)->foldingIndent(), QChar(QChar::Tabulation)));
 			setTextCursor(cur);
+
 			e->accept();
 			return;
 		} break;
@@ -195,9 +224,23 @@ void TextEdit::customTextModification(QKeyEvent* e) {
 			} else {
 				QPlainTextEdit::keyPressEvent(e);
 			}
+			e->accept();
+			return;
 		} break;
-		default:
+		default: {
+			QTextCursor cur = textCursor();
+			QTextBlock block = cur.block();
+			int tmp1;
+			if(startsRegion(block, tmp1)) {
+				QList<QTextBlock> blocks = getRegionSubBlocks(block.next());
+				setBlocksVisible(blocks, true);
+			} else if(endsRegion(block)) {
+				QList<QTextBlock> blocks = getRegionSubBlocks(block.previous());
+				setBlocksVisible(blocks, true);
+			}
 			QPlainTextEdit::keyPressEvent(e);
+			e->accept();
+		}
 	}
 }
 
@@ -227,9 +270,13 @@ void TextEdit::insertCompletion(const QString& completion) {
 	int extra = completion.length() - mCompleter->completionPrefix().length();
 
 
-	tc.movePosition(QTextCursor::Left);
-	tc.movePosition(QTextCursor::EndOfWord);
-	tc.insertText(completion.right(extra));
+	tc.movePosition(QTextCursor::StartOfWord);
+	tc.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
+	qDebug() << tc.selectedText();
+	tc.removeSelectedText();
+	setTextCursor(tc);
+	tc = textCursor();
+	tc.insertText(completion);
 	setTextCursor(tc);
 	blockSignals(false);
 }
@@ -239,7 +286,8 @@ TextEdit::TextEdit(QWidget *parent):
 	mParentWidget(parent),
 	mClicked(false),
 	mIsBlockSelection(false),
-	mFont(font())
+	mFont(font()),
+	mSyntaxStyle(nullptr)
 {
 	setMouseTracking(true);
 	setLineWrapMode(QPlainTextEdit::NoWrap);
@@ -269,6 +317,12 @@ TextEdit::TextEdit(QWidget *parent):
 	mRegionVisualizerFormat.setBackground(QColor(Qt::white));
 	mRegionVisualizerSelectedFormat.setForeground(QColor(Qt::red));
 	mRegionVisualizerSelectedFormat.setBackground(QColor(Qt::white));
+	mErrorUnderlineFormat.setForeground(QColor(Qt::red));
+	mErrorUnderlineFormat.setUnderlineStyle(QTextCharFormat::WaveUnderline);
+
+	mSelectedParenthesis.setForeground(QColor(Qt::red));
+	mSelectedParenthesis.setFontWeight(QFont::Black);
+
 }
 
 TextEdit::TextEdit(QWidget* parent, Document* doc):
@@ -284,37 +338,6 @@ TextEdit::TextEdit(QWidget* parent, Document* doc):
 }
 
 
-void TextEdit::lineNumberAreaMousePressEvent(QMouseEvent* e) {
-
-}
-
-void TextEdit::lineNumberAreaMouseReleaseEvent(QMouseEvent* e) {
-	int space = fontMetrics().width(QLatin1Char('9'));
-	if(e->button() == Qt::LeftButton) {
-		if(e->x() < (lineNumberAreaWidth() - space*(getDigitCount()-2))) {
-			QTextBlock block = blockAt(e->pos());
-			TextBlockUserData* data = blockData(block);
-			if(data != nullptr) {
-				data->setBookmark(!data->isBookmark());
-
-				repaint();
-			}
-
-		}
-		else if(e->x() > lineNumberAreaWidth() - space*2 && e->x() < lineNumberAreaWidth()) {
-			QTextBlock block = blockAt(e->pos());
-			Document* doc = toDocument(document());
-			int id;
-			if(startsRegion(block, id) && id != 0) {
-				QList<QTextBlock> list = getRegionSubBlocks(block);
-				list = list.mid(1, list.length()-2);
-				setBlocksVisible(list, !block.next().isVisible());
-				repaint();
-			}
-
-		}
-	}
-}
 
 void TextEdit::setCursorPosition(int row, int column) {
 	QTextCursor cursor = textCursor();
@@ -341,26 +364,151 @@ void TextEdit::setBlocksVisible(QList<QTextBlock>& blocks, bool visible) {
 		b.setVisible(visible);
 	}
 	document()->markContentsDirty(blocks.first().position(), blocks.last().position() - blocks.first().position());
-
 	viewport()->update();
+}
+
+
+QPair<int, int> TextEdit::searchCounterBracket(int pos) {
+
+	QPair<int, int> retVal(-1, document()->characterCount());
+
+	QVector<Parenthese> brackers;
+	int dir(0);
+	int id(-1);
+	int handedness(-1);
+	int start = pos;
+
+
+	const QChar parenthesis[3][2] = {{'(', ')'}, {'[', ']'}, {'{', '}'}};
+	if(pos == 0) {
+		QChar chr = document()->characterAt(pos);
+		for(int i = 0; i < 3; i++) {
+			if(chr == parenthesis[i][0]) {
+				dir = 1;
+				id = i;
+				handedness = 0;
+				retVal.first = start;
+				goto quit;
+			} else if(chr == parenthesis[i][1]){
+				dir = -1;
+				id = i;
+				handedness = 1;
+				retVal.second =  start;
+				goto quit;
+			}
+		}
+	} else {
+		pos--;
+		start--;
+		for(int j = 0; j < 2; j++) {
+			QChar chr = document()->characterAt(pos);
+			for(int i = 0; i < 3; i++) {
+				if(chr == parenthesis[i][0]) {
+					dir = 1;
+					id = i;
+					handedness = 0;
+					retVal.first = start;
+					goto quit;
+				} else if(chr == parenthesis[i][1]){
+					dir = -1;
+					id = i;
+					handedness = 1;
+					retVal.second =  start;
+					goto quit;
+				}
+			}
+			start++;
+			pos++;
+		}
+	}
+
+
+	quit:
+	if(dir == 0)
+		return retVal;
+
+	Parenthese par;
+	par.pos = pos;
+	par.id = id;
+	par.handedness = handedness;
+	brackers.append(par);
+	QTextCursor cur = textCursor();
+	cur.setPosition(pos);
+	cur.setPosition(pos+1, QTextCursor::KeepAnchor);
+	while(!brackers.isEmpty() && pos > -1 && pos < document()->characterCount()) {
+		pos += dir;
+		QTextCursor::MoveOperation op = dir > 0 ? QTextCursor::NextCharacter : QTextCursor::PreviousCharacter;
+		cur.movePosition(op);
+		cur.movePosition(op, QTextCursor::KeepAnchor);
+
+		QChar chr = document()->characterAt(pos);
+		if(chr == parenthesis[brackers.last().id][!brackers.last().handedness]) {
+			brackers.pop_back();
+		} else {
+			for(int i = 0; i < 3; i++) {
+				if(chr == parenthesis[i][0]){
+						Parenthese par;
+					par.pos = pos;
+					par.id = i;
+					par.handedness = 0;
+					brackers.append(par);
+				} else if(chr == parenthesis[i][1]){
+					Parenthese par;
+					par.pos = pos;
+					par.id = i;
+					par.handedness = 1;
+					brackers.append(par);
+				}
+			}
+		}
+	}
+	if(pos > start) {
+		retVal.first = start;
+		retVal.second = pos;
+	} else {
+		retVal.first = pos;
+		retVal.second = start;
+	}
+
+	return retVal;
+
 }
 
 
 
 void TextEdit::drawIndentationPipes(QPainter& painter, QTextBlock& block, int top, int bottom, int space, const QTextCharFormat& fmt) {
+	QTextBlock prevblock = block.previous();
 	QTextBlock nextblock = block.next();
 	int blockheight = blockBoundingGeometry(block).height();
 
 
 	int size = qMin(int(float(space)*1.5f), int((float)blockheight*0.75));
+	if ((size % 2))
+		size++;
 	int spaceStep = (int)(float(space)/5.0f);
 	int regionid;
 	int nextregion;
 	painter.setPen(fmt.foreground().color());
+
+
+
 	if(startsRegion(block, regionid)) {
+
 		QRect rect(lineNumberAreaWidth() - space - size/2, top+blockheight/2 - size/2, size, size);
+		if(prevblock.isValid()) {
+			if(!mRegionUnderCursor.contains(prevblock))
+				painter.setPen(mRegionVisualizerFormat.foreground().color());
+			if(blockData(prevblock)->foldingIndent() > 0 && !endsRegion(prevblock))
+				painter.drawLine(rect.left()+rect.width()/2, top,rect.left()+rect.width()/2, top+blockheight/2 - size/2);
+			painter.setPen(fmt.foreground().color());
+		}
+
+		painter.drawLine(rect.left()+rect.width()/2, top+blockheight/2 + size/2+1,rect.left()+rect.width()/2, top+blockheight/2 + size);
+
+
 		painter.fillRect(rect, fmt.background().color());
 		painter.drawRect(rect);
+
 		if(nextblock.isValid()) {
 			if(nextblock.isVisible()) {
 				painter.drawLine(rect.left()+1 + spaceStep, rect.top()+rect.height()/2, rect.right() - spaceStep, rect.top()+rect.height()/2);
@@ -372,7 +520,10 @@ void TextEdit::drawIndentationPipes(QPainter& painter, QTextBlock& block, int to
 	} else if(endsRegion(block, regionid, nextregion) && regionid != 0 && nextregion != 0) {
 		painter.setPen(fmt.foreground().color());
 		painter.drawLine(lineNumberAreaWidth() - space, top+blockheight/2, lineNumberAreaWidth(), top+blockheight/2);
-		painter.drawLine(lineNumberAreaWidth() - space, top, lineNumberAreaWidth() - space, bottom);
+		painter.drawLine(lineNumberAreaWidth() - space, top, lineNumberAreaWidth() - space, top+blockheight/2);
+		if(!mRegionUnderCursor.contains(nextblock))
+			painter.setPen(mRegionVisualizerFormat.foreground().color());
+		painter.drawLine(lineNumberAreaWidth() - space, top+blockheight/2+1, lineNumberAreaWidth() - space, bottom);
 	} else if(endsRegion(block, regionid, nextregion) && regionid != 0 && nextregion == 0 ) {
 		painter.drawLine(lineNumberAreaWidth() - space, top+blockheight/2, lineNumberAreaWidth(), top+blockheight/2);
 		painter.drawLine(lineNumberAreaWidth() - space, top, lineNumberAreaWidth() - space, top+blockheight/2);
@@ -401,6 +552,30 @@ void TextEdit::drawModification(QPainter& painter, QTextBlock& block, int top, i
 		painter.fillRect(lineNumberAreaWidth() - space*2+1, top, 2, blockheight,  QColor(0, 196, 0));
 }
 
+void TextEdit::autoIndentCursor(QTextCursor& cursor) {
+	cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+	QTextBlock block = cursor.block();
+	TextBlockUserData* data = blockData(block);
+	bool perfect;
+	endsRegion(block, perfect);
+	int targetTabAmount = perfect ? data->foldingIndent()-1 : data->foldingIndent();
+
+	QString str = block.text().trimmed();
+	cursor.movePosition(QTextCursor::StartOfBlock);
+	cursor.movePosition(QTextCursor::EndOfBlock);
+	cursor.removeSelectedText();
+	QChar tab(QChar::Tabulation);
+	if(targetTabAmount > 0)
+		cursor.insertText(QString(targetTabAmount, tab)+str);
+}
+
+void TextEdit::updateFont() {
+	QFont ffont = mFont;
+	ffont.setPointSizeF(font().pointSizeF());
+	setFont(ffont);
+	qDebug() << font().family();
+}
+
 bool TextEdit::startsRegion(const QTextBlock& block, int& id) {
 	id = 0;
 	if(!block.isValid())
@@ -411,8 +586,8 @@ bool TextEdit::startsRegion(const QTextBlock& block, int& id) {
 	TextBlockUserData* curdata = blockData(block);
 	TextBlockUserData* nextdata = blockData(block.next());
 
-	if(curdata->getFoldingIndent() < nextdata->getFoldingIndent()) {
-		id = nextdata->getFoldingIndent();
+	if(curdata->foldingIndent() < nextdata->foldingIndent()) {
+		id = nextdata->foldingIndent();
 		return true;
 	}
 	return false;
@@ -426,12 +601,14 @@ bool TextEdit::endsRegion(const QTextBlock& block, int& cid, int& nid) {
 bool TextEdit::endsRegion(const QTextBlock& block, int& cid, int& nid, bool& perfect) {
 	cid = 0;
 	nid = 0;
-	if(!block.isValid())
+	if(!block.isValid()) {
+		perfect = false;
 		return false;
+	}
 	if(!block.next().isValid()) {
-		cid = blockData(block)->getFoldingIndent();
+		cid = blockData(block)->foldingIndent();
 		nid = 0;
-		cid = blockData(block)->getFoldingIndent();
+		cid = blockData(block)->foldingIndent();
 		perfect = false;
 		return true;
 	}
@@ -439,9 +616,9 @@ bool TextEdit::endsRegion(const QTextBlock& block, int& cid, int& nid, bool& per
 	TextBlockUserData* curdata = blockData(block);
 	TextBlockUserData* nextdata = blockData(block.next());
 
-	if(curdata->getFoldingIndent() > nextdata->getFoldingIndent()) {
-		cid = curdata->getFoldingIndent();
-		nid = nextdata->getFoldingIndent();
+	if(curdata->foldingIndent() > nextdata->foldingIndent()) {
+		cid = curdata->foldingIndent();
+		nid = nextdata->foldingIndent();
 		perfect = true;
 		return true;
 	}
@@ -458,8 +635,8 @@ bool TextEdit::continuesRegion(QTextBlock& block, int& id) {
 	TextBlockUserData* curdata = blockData(block);
 	TextBlockUserData* nextdata = blockData(block.next());
 
-	if(curdata->getFoldingIndent() == nextdata->getFoldingIndent()) {
-		id = curdata->getFoldingIndent();
+	if(curdata->foldingIndent() == nextdata->foldingIndent()) {
+		id = curdata->foldingIndent();
 		return true;
 	}
 	return false;
@@ -563,6 +740,9 @@ void TextEdit::mouseDoubleClickEvent(QMouseEvent* e) {
 
 void TextEdit::mousePressEvent(QMouseEvent* e) {
 	QPlainTextEdit::mousePressEvent(e);
+	if(e->button() == Qt::LeftButton)
+		if(lineNumberArea()->mIsSelection)
+			lineNumberArea()->mIsSelection = false;
 	if(e->button() == Qt::LeftButton && mClicked == false) {
 		mClicked == true;
 		if((e->modifiers() & (Qt::AltModifier & Qt::ShiftModifier)) ==
@@ -572,7 +752,6 @@ void TextEdit::mousePressEvent(QMouseEvent* e) {
 			mExtraCursors.clear();
 		}
 	}
-	lineNumberAreaMousePressEvent(e);
 }
 
 void TextEdit::mouseReleaseEvent(QMouseEvent* e) {
@@ -590,10 +769,14 @@ void TextEdit::wheelEvent(QWheelEvent* e) {
 			zoomOut();
 		else if (delta > 0)
 			zoomIn();
+		if(delta)
+			updateFont();
 		return;
 	}
 	QPlainTextEdit::wheelEvent(e);
-	QPlainTextEdit::setFont(mFont);
+
+
+
 	viewport()->update();
 }
 
@@ -609,7 +792,10 @@ void TextEdit::paintEvent(QPaintEvent* e) {
 		if(block.isVisible())
 			y += height;
 		if(block.isVisible() && block.next().isValid() && !block.next().isVisible()) {
-			p.setPen(QColor(Qt::cyan).light(60));
+			if(mRegionUnderCursor.contains(block))
+				p.setPen(mRegionVisualizerSelectedFormat.foreground().color());
+			else
+				p.setPen(mRegionVisualizerFormat.foreground().color());
 			p.drawLine(0, y, viewport()->width(), y);
 		}
 
@@ -808,9 +994,9 @@ void TextEdit::updateDocumentLength(int ) {
 
 void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *e) {
 
-
-	int space = fontMetrics().width(QLatin1Char('_'));
-
+	QFontMetrics metrics(fontMetrics());
+	int space = metrics.width(QLatin1Char('_'));
+	int cheight = metrics.height();
 
 	QTextBlock prevblock = firstVisibleBlock();
 	QTextBlock block = firstVisibleBlock();
@@ -836,13 +1022,20 @@ void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *e) {
 
 
 			QString number = QString::number(blockNumber + 1);
-			painter.setPen(mLineNumberFormat.foreground().color());
+
 			QFont fnt = font();
+			fnt.setPointSizeF(font().pointSizeF());
 			fnt.setBold(mLineNumberFormat.font().bold());
 			fnt.setItalic(mLineNumberFormat.font().italic());
-
+			if(textCursor().block() != block)
+				painter.setPen(mLineNumberFormat.foreground().color());
+			else {
+				painter.fillRect(e->rect().left(), top, e->rect().right()-space*2, blockheight, mLineNumberFormat.background().color().light(160));
+				painter.setPen(mLineNumberFormat.foreground().color().light(160));
+			}
 			painter.setFont(fnt);
-			painter.drawText(0, top, lineNumberAreaWidth() - space*2 - 4, fontMetrics().height(), Qt::AlignRight, number);
+			int adjust = blockheight - (blockheight - cheight);
+			painter.drawText(0, top, lineNumberAreaWidth() - space*2 - 4, adjust, Qt::AlignRight, number);
 
 
 			if(block.userData() != nullptr) {
@@ -872,6 +1065,98 @@ void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *e) {
 
 }
 
+
+void TextEdit::lineNumberAreaMousePressEvent(QMouseEvent* e) {
+	int space = fontMetrics().width(QLatin1Char('9'));
+	if(e->button() == Qt::LeftButton) {
+
+		if(e->x() > space*2 && e->x() < lineNumberAreaWidth() - space*2) {
+
+			QTextBlock block = blockAt(e->pos());
+
+			if(lineNumberArea()->mIsSelection == false) {
+				QTextCursor cursor = textCursor();
+
+				cursor.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
+				setTextCursor(cursor);
+				lineNumberArea()->mIsSelection = true;
+			}
+		}
+	}
+}
+
+void TextEdit::lineNumberAreaMouseReleaseEvent(QMouseEvent* e) {
+	int space = fontMetrics().width(QLatin1Char('9'));
+	if(e->button() == Qt::LeftButton) {
+		if(lineNumberArea()->mIsSelection)
+			lineNumberArea()->mIsSelection = false;
+		if(e->x() < (lineNumberAreaWidth() - space*(getDigitCount()-2))) {
+			QTextBlock block = blockAt(e->pos());
+			TextBlockUserData* data = blockData(block);
+			if(data != nullptr) {
+				data->setBookmark(!data->isBookmark());
+				lineNumberArea()->repaint();
+			}
+
+		}
+		else if(e->x() > lineNumberAreaWidth() - space*2 && e->x() < lineNumberAreaWidth()) {
+			QTextBlock block = blockAt(e->pos());
+			Document* doc = toDocument(document());
+			int id;
+			if(startsRegion(block, id) && id != 0) {
+				QList<QTextBlock> list = getRegionSubBlocks(block);
+				list = list.mid(1, list.length()-2);
+				setBlocksVisible(list, !block.next().isVisible());
+				lineNumberArea()->repaint();
+			}
+		}
+	}
+}
+
+
+void TextEdit::lineNumberAreaMouseMoveEvent(QMouseEvent* e) {
+	QFontMetrics metrics(font());
+	int width = metrics.width('9');
+	QTextBlock block = blockAt(e->pos());
+
+	if(lineNumberArea()->mIsSelection) {
+		QTextCursor cursor = textCursor();
+		cursor.movePosition(QTextCursor::Start, QTextCursor::KeepAnchor);
+		cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, cursor.block().position());
+		setTextCursor(cursor);
+	}
+
+
+	if(e->x() > lineNumberAreaWidth() - width*2 && e->x() <  lineNumberAreaWidth())  {
+		mRegionUnderCursor = getRegionSubBlocks(block);
+	} else {
+		mRegionUnderCursor.clear();
+	}
+	mLineNumberWidget->repaint();
+	repaint();
+}
+
+void TextEdit::lineNumberAreaWheelEvent(QWheelEvent* e){
+	wheelEvent(e);
+}
+
+void TextEdit::lineNumberAreaContextMenuEvent(QContextMenuEvent* e) {
+	QTextBlock block = blockAt(e->pos());
+	TextBlockUserData* data = blockData(block);
+	bool book = data->isBookmark();
+	bool deb = data->isDebug();
+	LineNumberArea* linenumbers = qobject_cast<LineNumberArea*>(mLineNumberWidget);
+	linenumbers->mBookMarkAction->setChecked(book);
+	linenumbers->mBreakPointAction->setChecked(deb);
+
+	QMenu* menu = new QMenu(mLineNumberWidget);
+	menu->addActions({linenumbers->mBookMarkAction, linenumbers->mBreakPointAction});
+	menu->exec(e->globalPos());
+	delete menu;
+	data->setBookmark(linenumbers->mBookMarkAction->isChecked());
+	data->setDebug(linenumbers->mBreakPointAction->isChecked());
+}
+
 void TextEdit::documentWatchPaintEvent(QPaintEvent *e) {
 	QPainter p(mDocumentWatcher);
 	p.fillRect(e->rect(), Qt::lightGray);
@@ -894,6 +1179,10 @@ void TextEdit::documentWatchPaintEvent(QPaintEvent *e) {
 		y += metrics.height();
 	}
 
+}
+
+LineNumberArea*	TextEdit::lineNumberArea() {
+	return qobject_cast<LineNumberArea*>(mLineNumberWidget);
 }
 
 const QString TextEdit::textUnderCursor() {
@@ -924,6 +1213,14 @@ void TextEdit::setRegionVisualizerFormat(const QTextCharFormat& fmt) {
 
 void TextEdit::setRegionVisualizerSelectedFormat(const QTextCharFormat& fmt) {
 	mRegionVisualizerSelectedFormat = fmt;
+}
+
+void TextEdit::setmSelectedParenthesisFormat(const QTextCharFormat& fmt) {
+	mSelectedParenthesis = fmt;
+}
+
+void TextEdit::setErrorUnderlineFormat(const QTextCharFormat& fmt) {
+	mErrorUnderlineFormat = fmt;
 }
 
 void TextEdit::setFont(const QFont& fnt) {
@@ -987,7 +1284,7 @@ QList<QTextBlock> TextEdit::getRegionSubBlocks(const QTextBlock& block) {
 	if(data == nullptr)
 		return list;
 
-	int regionid = data->getFoldingIndent();
+	int regionid = data->foldingIndent();
 
 
 	QTextBlock iblock = block;
@@ -1014,12 +1311,12 @@ QList<QTextBlock> TextEdit::getRegionSubBlocks(const QTextBlock& block) {
 QTextBlock TextEdit::getBlockRegionStart(const QTextBlock& block) {
 	if(!block.isValid())
 		return QTextBlock();
-	int regionId = blockData(block)->getFoldingIndent();
+	int regionId = blockData(block)->foldingIndent();
 
 	int id;
 	QTextBlock iblock = block;
 	while(iblock.isValid()) {
-		if(blockData(iblock)->getFoldingIndent() >= regionId)
+		if(blockData(iblock)->foldingIndent() >= regionId)
 			iblock = iblock.previous();
 		else
 			break;
@@ -1030,11 +1327,11 @@ QTextBlock TextEdit::getBlockRegionStart(const QTextBlock& block) {
 QTextBlock TextEdit::getBlockRegionEnd(const QTextBlock& block) {
 	if(!block.isValid())
 		return QTextBlock();
-	int regionId = blockData(block)->getFoldingIndent();
+	int regionId = blockData(block)->foldingIndent();
 
 	QTextBlock iblock = block;
 	while(iblock.isValid()){
-		if(blockData(iblock)->getFoldingIndent() >= regionId)
+		if(blockData(iblock)->foldingIndent() >= regionId)
 			iblock = iblock.next();
 		else
 			break;
@@ -1051,13 +1348,73 @@ void TextEdit::highlightCurrentLine() {
 		selection.format = mCurrentLine;
 		selection.format.setProperty(QTextFormat::FullWidthSelection, true);
 		selection.cursor = textCursor();
+
+
 		selection.cursor.clearSelection();
 		mRegionUnderCursor = getRegionSubBlocks(selection.cursor.block());
 		extraSelections.append(selection);
+		repaint();
+		QPair<int, int> pair = searchCounterBracket(textCursor().position());
+
+		if(pair.first > 0 && pair.first < document()->characterCount() &&
+		   pair.second > 0 && pair.second < document()->characterCount()) {
+
+			qDebug() << pair;
+
+			QTextEdit::ExtraSelection a;
+			QTextEdit::ExtraSelection b;
+			QTextEdit::ExtraSelection c;
+
+
+
+			QTextCursor cur = textCursor();
+			cur.setPosition(pair.first);
+			cur.setPosition(pair.first+1, QTextCursor::KeepAnchor);
+			a.cursor = cur;
+			a.format = mSelectedParenthesis;
+
+
+			cur.setPosition(pair.second);
+			cur.setPosition(pair.second+1, QTextCursor::KeepAnchor);
+
+			b.cursor = cur;
+			b.format = mSelectedParenthesis;
+
+			cur.setPosition(pair.first+1);
+			cur.setPosition(pair.second, QTextCursor::KeepAnchor);
+			c.cursor = cur;
+			c.format.setUnderlineStyle(QTextCharFormat::DotLine);
+			c.format.setUnderlineColor(mSelectedParenthesis.foreground().color());
+
+			extraSelections.append(a);
+			extraSelections.append(b);
+			extraSelections.append(c);
+
+		} else if(pair.first > 0 && pair.first < document()->characterCount()) {
+			QTextEdit::ExtraSelection ext;
+			QTextCursor cur = textCursor();
+			cur.setPosition(pair.first);
+			cur.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+			ext.cursor = cur;
+			ext.format.setUnderlineColor(mErrorUnderlineFormat.foreground().color());
+			ext.format.setUnderlineStyle(QTextCharFormat::WaveUnderline);
+			extraSelections.append(ext);
+		} else if(pair.second > 0 && pair.second < document()->characterCount()) {
+			QTextEdit::ExtraSelection ext;
+			QTextCursor cur = textCursor();
+			cur.setPosition(pair.second);
+			cur.movePosition(QTextCursor::StartOfLine);
+			cur.setPosition(pair.second, QTextCursor::KeepAnchor);
+			ext.cursor = cur;
+			ext.format.setUnderlineColor(mErrorUnderlineFormat.foreground().color());
+			ext.format.setUnderlineStyle(QTextCharFormat::WaveUnderline);
+			extraSelections.append(ext);
+		}
 	}
 
 	setExtraSelections(extraSelections);
 	mLineNumberWidget->repaint();
+
 }
 
 
@@ -1074,35 +1431,3 @@ void TextEdit::handleBlockSelection(int rowdiff, int coldiff) {
 
 
 
-void TextEdit::lineNumberAreaMouseMoveEvent(QMouseEvent* e) {
-	QFontMetrics metrics(font());
-	int width = metrics.width('9');
-	if(e->x() > lineNumberAreaWidth() - width*2 && e->x() <  lineNumberAreaWidth())  {
-		QTextBlock block = blockAt(e->pos());
-		mRegionUnderCursor = getRegionSubBlocks(block);
-	} else {
-		mRegionUnderCursor.clear();
-	}
-	mLineNumberWidget->repaint();
-}
-
-void TextEdit::lineNumberAreaWheelEvent(QWheelEvent* e){
-	wheelEvent(e);
-}
-
-void TextEdit::lineNumberAreaContextMenuEvent(QContextMenuEvent* e) {
-	QTextBlock block = blockAt(e->pos());
-	TextBlockUserData* data = blockData(block);
-	bool book = data->isBookmark();
-	bool deb = data->isDebug();
-	LineNumberArea* linenumbers = qobject_cast<LineNumberArea*>(mLineNumberWidget);
-	linenumbers->mBookMarkAction->setChecked(book);
-	linenumbers->mBreakPointAction->setChecked(deb);
-
-	QMenu* menu = new QMenu(mLineNumberWidget);
-	menu->addActions({linenumbers->mBookMarkAction, linenumbers->mBreakPointAction});
-	menu->exec(e->globalPos());
-	delete menu;
-	data->setBookmark(linenumbers->mBookMarkAction->isChecked());
-	data->setDebug(linenumbers->mBreakPointAction->isChecked());
-}
