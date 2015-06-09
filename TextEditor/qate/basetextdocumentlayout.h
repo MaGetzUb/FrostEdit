@@ -40,24 +40,32 @@
 
 class TextBlockUserData : public Qate::BlockData
 {
-	bool m_foldingStartIncluded;
-	bool m_foldingEndIncluded;
-	int m_foldingIdent;
-	int m_regionId;
+	bool mFoldingStartIncluded;
+	bool mFoldingEndIncluded;
+	int mFoldingIdent;
+	int mRegionId;
 
+
+	bool mRegionStarts;
+	bool mRegionEnds;
 	public:
-	TextBlockUserData(): Qate::BlockData(), m_foldingStartIncluded(false),m_foldingEndIncluded(false), m_foldingIdent(0), m_regionId(0) {}
+	TextBlockUserData(): Qate::BlockData(), mFoldingStartIncluded(false),mFoldingEndIncluded(false), mFoldingIdent(0), mRegionId(0) {}
 	virtual ~TextBlockUserData(){}
 
-	void setFoldingStartIncluded(const bool b) {m_foldingStartIncluded = b;}
-	void setFoldingEndIncluded(const bool b) {m_foldingEndIncluded = b;}
-	void setFoldingIndent(const int i) {m_foldingIdent = i;}
-	void setRegionId(int id) {m_regionId = id;}
+	void setFoldingStartIncluded(const bool b) {mFoldingStartIncluded = b;}
+	void setFoldingEndIncluded(const bool b) {mFoldingEndIncluded = b;}
+	void setFoldingIndent(const int i) {mFoldingIdent = i;}
+	void setRegionId(int id) {mRegionId = id;}
 
-	bool isFoldingStartIncluded() {return m_foldingStartIncluded;}
-	bool isFoldingEndIncluded() {return m_foldingEndIncluded;}
-	int getFoldingIndent() {return m_foldingIdent;}
-	int getRegionId() {return m_regionId;}
+	void setRegionStart(bool b) {mRegionStarts = b;}
+	void setRegionEnd(bool b) {mRegionEnds = b;}
+	bool isRegionStart() {return mRegionStarts;}
+	bool isRegionEnd() {return mRegionEnds;}
+
+	bool isFoldingStartIncluded() {return mFoldingStartIncluded;}
+	bool isFoldingEndIncluded() {return mFoldingEndIncluded;}
+	int foldingIndent() {return mFoldingIdent;}
+	int getRegionId() {return mRegionId;}
 };
 
 #endif // BASETEXTDOCUMENTLAYOUT_H

@@ -130,6 +130,8 @@ void Highlighter::highlightBlock(const QString &text) {
 			handleContextChange(mCurrentContext->lineBeginContext(),
 					    mCurrentContext->definition());
 
+
+
 			ProgressData progress;
 			const int length = text.length();
 			while(progress.offset() < length)
@@ -252,6 +254,8 @@ void Highlighter::iterateThroughRules(const QString &text,
 					++mRegionDepth;
 					++mRegions;
 					curBlockData->setRegionId(mRegions);
+					curBlockData->setRegionStart(true);
+
 					if(progress->isOpeningBraceMatchAtFirstNonSpace())
 						++curBlockData->mFoldingIndentDelta;
 				}
@@ -263,7 +267,7 @@ void Highlighter::iterateThroughRules(const QString &text,
 						--mRegionDepth;
 
 						if(prevBlockData != nullptr) curBlockData->setRegionId(prevBlockData->getRegionId()-1);
-
+						curBlockData->setRegionEnd(true);
 						if(progress->isClosingBraceMatchAtNonEnd())
 							--curBlockData->mFoldingIndentDelta;
 					}

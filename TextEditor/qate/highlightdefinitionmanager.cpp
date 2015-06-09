@@ -37,20 +37,6 @@
 #include "highlighterexception.h"
 #include "definitiondownloader.h"
 #include "highlightersettings.h"
-//#include "plaintexteditorfactory.h"
-//#include "texteditorconstants.h"
-//#include "texteditorplugin.h"
-//#include "texteditorsettings.h"
-
-//#include <coreplugin/icore.h>
-//#include <utils/qtcassert.h>
-//#include <coreplugin/progressmanager/progressmanager.h>
-//#include <qtconcurrent/QtConcurrentTools>
-//#include "qtconcurrent/QtConcurrentTools"
-//"qtconcurrent/multitask.h"
-//"qtconcurrent/runextensions.h"
-
-
 #include <QtAlgorithms>
 #include <QtPlugin>
 #include <QString>
@@ -62,13 +48,10 @@
 #include <QDir>
 #include <QRegExp>
 #include <QFuture>
-//#include <QtConcurrent/multitask.h>
-//#include <QtConcurrent/runextensions.h>
 #include <QtConcurrent/QtConcurrent>
 #include <QtConcurrent/QtConcurrentMap>
 #include <QUrl>
 #include <QSet>
-//#include <DesktopServices>
 #include <QMessageBox>
 #include <QXmlSimpleReader>
 #include <QXmlInputSource>
