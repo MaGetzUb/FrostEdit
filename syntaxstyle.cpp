@@ -1,4 +1,5 @@
 #include "syntaxstyle.hpp"
+#include "TextEditor/textedit.hpp"
 
 SyntaxStyle::SyntaxStyle():
 	mFile("")
@@ -38,6 +39,7 @@ void SyntaxStyle::loadDefaults() {
 	mRegionVisualizer.setBackground(QColor(255, 255, 255));
 	mRegionVisualizerSelected.setForeground(QColor(Qt::red));
 	mRegionVisualizerSelected.setBackground(QColor(255, 255, 255));
+
 	mNumber.setForeground(QColor(Qt::darkRed));
 	mOperator.setForeground(QColor(Qt::gray).dark(180));
 }
@@ -56,8 +58,12 @@ bool SyntaxStyle::load(const QString& path) {
 
 		file.close();
 	}
+	QDomElement mainelement = mXMLDoc.firstChildElement();
 
-	readScheme(mXMLDoc.firstChildElement());
+	QDomNode texteditor = mainelement.elementsByTagName("texteditor").at(0);
+	readScheme(texteditor.toElement());
+	QDomNode console = mainelement.elementsByTagName("console").at(0);
+	readScheme(console.toElement());
 	return true;
 }
 
@@ -109,6 +115,7 @@ void SyntaxStyle::applyToTextEdit(TextEdit* edit) {
 	edit->setSimilarOccuranceFormat(mSimilarOccurance);
 	edit->setRegionVisualizerFormat(mRegionVisualizer);
 	edit->setRegionVisualizerSelectedFormat(mRegionVisualizerSelected);
+	edit->setErrorUnderlineFormat(mErrorFormat);
 }
 
 QTextCharFormat*SyntaxStyle::formatByName(const QString& str) {
@@ -148,6 +155,10 @@ QTextCharFormat*SyntaxStyle::formatByName(const QString& str) {
 		return &mOperator;
 	else if(str == "Selection")
 		return &mSelection;
+	else if(str == "StdOut")
+		return &mStdOut;
+	else if(str == "StdErr")
+		return &mStdErr;
 	return nullptr;
 }
 

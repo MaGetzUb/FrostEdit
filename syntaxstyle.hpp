@@ -5,9 +5,12 @@
 #include <QTextCharFormat>
 #include "TextEditor/qate/defaultcolors.h"
 #include "TextEditor/fatehighlighter.hpp"
-#include "TextEditor/textedit.hpp"
 
+#include "console.hpp"
+
+class TextEdit;
 class SyntaxStyle {
+
 	QTextCharFormat mBasicTextFormat;
 	QTextCharFormat mKeywordFormat;
 	QTextCharFormat mDataTypeFormat;
@@ -24,9 +27,13 @@ class SyntaxStyle {
 	QTextCharFormat mSelection;
 	//TextEdit colors:
 	QTextCharFormat mLineNumber;
+	QTextCharFormat mSelectedLineNumber;
 	QTextCharFormat mSimilarOccurance;
 	QTextCharFormat mRegionVisualizer;
 	QTextCharFormat mRegionVisualizerSelected;
+	//Console colors
+	QTextCharFormat mStdErr;
+	QTextCharFormat mStdOut;
 
 
 	QString mFile;
@@ -45,6 +52,7 @@ class SyntaxStyle {
 
 		void applyToHighlighter(TextEditor::Internal::Highlighter* hiltter);
 		void applyToTextEdit(TextEdit* edit);
+		void applyToConsole(Console* console);
 	private:
 		void readScheme(QDomElement element);
 		QTextCharFormat* formatByName(const QString&);
