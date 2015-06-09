@@ -13,6 +13,9 @@ class Console : public QPlainTextEdit {
 		QProcess* mProcess;
 		bool mDisconnectSignals;
 		bool mRunning;
+		QTextCharFormat mStdErrFmt;
+		QTextCharFormat mStdOutFmt;
+
 	public:
 		explicit Console(QWidget *parent = 0);
 		~Console();
@@ -26,13 +29,18 @@ class Console : public QPlainTextEdit {
 
 
 	public slots:
-		void insertText(const QString& str, const QBrush& brsh = QBrush(Qt::black));
+		void insertText(const QString& str);
+		void insertText(const QString& str, const QBrush& brsh);
 		void insertText(const QString& str, const QTextCharFormat&);
 
 		void processFinished(int, QProcess::ExitStatus);
 		void closeProcess();
 		void processStarted();
+		bool running();
 		QProcess* getProcess();
+
+		void setStdErrFormat(const QTextCharFormat&);
+		void setStdOutFormat(const QTextCharFormat&);
 
 		void disconnectSignalsAfterFinishing(bool);
 		void insertStandardOut(const QString& str);
@@ -42,7 +50,6 @@ class Console : public QPlainTextEdit {
 		void readAll();
 		void readAllStandardOut();
 		void readAllStandardError();
-		void kill();
 };
 
 #endif // CONSOLE_HPP

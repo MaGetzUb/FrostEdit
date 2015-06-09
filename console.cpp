@@ -1,6 +1,7 @@
 #include "console.hpp"
 #include <QDebug>
 #include <QTime>
+
 QTextLine Console::getLineUnderCursor(const QTextCursor &cursor) {
 
 	const QTextBlock block = cursor.block();
@@ -19,11 +20,15 @@ Console::Console(QWidget *parent) :
 	QPlainTextEdit(parent)
 {
 	setReadOnly(true);
+
+	mStdErrFmt.setForeground(QColor(255, 0, 0));
+	mStdOutFmt.setForeground(QColor(0, 96, 192));
+	setLineWrapMode(NoWrap);
 }
 
-Console::~Console()
-{
-
+Console::~Console() {
+	if(running())
+		closeProcess();
 }
 
 void Console::hookToProcess(QProcess* proc) {
@@ -35,6 +40,12 @@ void Console::hookToProcess(QProcess* proc) {
 	connect(mProcess, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(processFinished(int, QProcess::ExitStatus)));
 	connect(mProcess, SIGNAL(started()), this, SLOT(processStarted()));
 	qDebug() << "Hooked to qprocess!";
+}
+
+void Console::insertText(const QString& str) {
+	QTextCursor cursor = textCursor();
+	cursor.insertText(str+tr("\n"));
+	setTextCursor(cursor);
 }
 
 void Console::insertText(const QString& str, const QBrush& brsh) {
@@ -60,10 +71,11 @@ void Console::insertText(const QString& str, const QTextCharFormat& fmt) {
 
 void Console::processFinished(int err, QProcess::ExitStatus status) {
 
+	QString insertion = QTime::currentTime().toString("hh:mm:ss");
 	if(status == 1) {
-		insertText(mProcess->program()+" crashed!");
+		insertText(tr("<%1> %2 crashed!").arg(insertion).arg(mProcess->program()));
 	} else {
-		insertText(mProcess->program()+tr(" finished succesfully! With exit code: %1").arg(err));
+		insertText(tr("<%1> %2 finished succesfully! With exit code: %3").arg(insertion).arg(mProcess->program()).arg(err));
 	}
 
 	if(mDisconnectSignals) {
@@ -86,8 +98,20 @@ void Console::processStarted() {
 	mRunning = true;
 }
 
+bool Console::running() {
+	return mProcess->state() == QProcess::Running;
+}
+
 QProcess* Console::getProcess() {
 	return mProcess;
+}
+
+void Console::setStdErrFormat(const QTextCharFormat& fmt) {
+	mStdErrFmt = fmt;
+}
+
+void Console::setStdOutFormat(const QTextCharFormat& fmt) {
+	mStdOutFmt = fmt;
 }
 
 void Console::disconnectSignalsAfterFinishing(bool b) {
@@ -98,30 +122,20 @@ void Console::readAll() {
 	QString str = mProcess->readAll();
 	insertText(str);
 	emit textAdded(str);
-	qDebug() << "Text output!";
-	qDebug() << str;
 }
 
 void Console::readAllStandardOut() {
 	QString str = mProcess->readAllStandardOutput();
 	insertStandardOut(str);
 	emit stdOutAdded(str);
-	qDebug() << "Standard output!";
-	qDebug() << str;
 }
 
 void Console::readAllStandardError() {
 	QString str = mProcess->readAllStandardError();
 	insertStandardOut(str);
 	emit stdErrorAdded(str);
-	qDebug() << "Standard error!";
-	qDebug() << str;
 }
 
-void Console::kill()
-{
-
-}
 
 void Console::insertStandardOut(const QString &str) {
 	QTextCursor cursor = textCursor();
@@ -129,9 +143,14 @@ void Console::insertStandardOut(const QString &str) {
 	QTextCharFormat fmt;
 
 
-	fmt.setForeground(QColor(0, 96, 192));
-	QString insertion = QTime::currentTime().toString("hh:mm:ss");
-	cursor.insertText(tr("<")+insertion+tr("> ")+str, fmt);
+
+	QStringList list = str.split("\n");
+	for(auto& s: list) {
+		if(s.isEmpty())
+			continue;
+		QString insertion = QTime::currentTime().toString("hh:mm:ss");
+		cursor.insertText(tr("<%1> %2\n").arg(insertion).arg(s), mStdOutFmt);
+	}
 	cursor.movePosition(QTextCursor::End, QTextCursor::MoveAnchor);
 	cursor.setCharFormat(oldfmt);
 
@@ -142,10 +161,13 @@ void Console::insertErrorOut(const QString &str) {
 	QTextCursor cursor = textCursor();
 	QTextCharFormat oldfmt = cursor.charFormat();
 	QTextCharFormat fmt;
-	fmt.setForeground(QColor(255, 0, 0));
-
-	QString insertion = QTime::currentTime().toString("hh:mm:ss");
-	cursor.insertText(tr("<")+insertion+tr("> ")+str, fmt);
+	QStringList list = str.split("\n");
+	for(auto& s: list) {
+		if(s.isEmpty())
+			continue;
+		QString insertion = QTime::currentTime().toString("hh:mm:ss");
+		cursor.insertText(tr("<%1> %2\n").arg(insertion).arg(s), mStdErrFmt);
+	}
 	cursor.movePosition(QTextCursor::End, QTextCursor::MoveAnchor);
 	cursor.setCharFormat(oldfmt);
 
