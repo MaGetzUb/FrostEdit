@@ -76,7 +76,9 @@ class FrostEdit : public QMainWindow {
 		~FrostEdit();
 		void dropEvent(QDropEvent *);
 		void dragEnterEvent(QDragEnterEvent *);
-	public slots:
+                void disableActions();
+                void enableActions();
+public slots:
 		void fileChangedOutside(QString);
 		void updateTabHeader(Document*, bool);
 	private slots:

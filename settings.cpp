@@ -20,11 +20,11 @@ namespace Settings {
 		return gSettings.value(key, defaultValue);
 	}
 
-	void Settings::set(const QString& key, const QVariant& variant) {
+	void set(const QString& key, const QVariant& variant) {
 		gSettings.setValue(key, variant);
 	}
 
-	void Settings::sync(){
+	void sync(){
 		gSettings.sync();
 	}
 

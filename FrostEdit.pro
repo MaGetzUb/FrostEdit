@@ -45,13 +45,14 @@ SOURCES += main.cpp\
     TextEditor/qate/tabsettings.cpp \
     TextEditor/fatehighlighter.cpp \
     documentitem.cpp \
-    documentitem.cpp \
     settings.cpp \
     TextEditor/codemodel.cpp \
     TextEditor/frostcodemodel.cpp \
     TextEditor/frosttoken.cpp \
     quitdialog.cpp \
-    syntaxstyle.cpp
+    syntaxstyle.cpp \
+    TextEditor/frostcodemodelcontext.cpp \
+    TextEditor/codepoint.cpp
 
 
 HEADERS  += \
@@ -100,7 +101,9 @@ HEADERS  += \
     TextEditor/symbol.hpp \
     TextEditor/frosttoken.hpp \
     quitdialog.hpp \
-    syntaxstyle.hpp
+    syntaxstyle.hpp \
+    TextEditor/frostcodemodelcontext.hpp \
+    TextEditor/tokenbase.hpp
 
 
 FORMS    += \

@@ -1,8 +1,12 @@
 #ifndef FROSTCODEMODEL_H
 #define FROSTCODEMODEL_H
-#include "codemodel.hpp"
 #include <QHash>
+#include <QVector>
+
+#include "codemodel.hpp"
 #include "frosttoken.hpp"
+#include "frostcodemodelcontext.hpp"
+
 namespace Frost {
 
 class FrostCodeModel : public CodeModel
@@ -11,7 +15,7 @@ class FrostCodeModel : public CodeModel
 
 
 	public:
-		FrostCodeModel();
+		FrostCodeModel(const QSharedPointer<CodeModelContext> &context, QObject *parent = 0);
 		~FrostCodeModel();
 
 		void parse();
@@ -19,15 +23,45 @@ class FrostCodeModel : public CodeModel
 		QList<Symbol*> codeComplete(int position) const;
 	public:
 		void documentEdited(int position, int charsRemoved, int charsAdded);
-
 	protected:
 		void documentAdded(const QString &filePath, Document *doc);
+		void deleteAllTokens();
 
-		QHash<QString, Token::Type> mKeywords;
+		Token *createToken(Token *insertAfterThis, Token::Type type, const QString &text, QLinkedList<LineStartPoint>::Iterator lineStart, int column);
+		Token *findTokenAfterPoint(int i);
+		Token *findTokenBeforePoint(int i);
+
+		template <typename CharIterator>
+		Token *analyze(CharIterator &it, Token *insertAfterThis, QLinkedList<LineStartPoint>::Iterator &lineStartPoint);
+
+		template <typename CharIterator>
+		Token *createNumberToken(CharIterator &it, Token *insertAfterThis, QLinkedList<LineStartPoint>::Iterator &lineStartPoint);
+
+		template <typename CharIterator>
+		Token *createStringLiteralToken(CharIterator &it, Token *insertAfterThis, QLinkedList<LineStartPoint>::Iterator &lineStartPoint);
+
+		template <typename CharIterator>
+		Token *createIdentifierToken(CharIterator &it, Token *insertAfterThis, QLinkedList<LineStartPoint>::Iterator &lineStartPoint);
+
+		template <typename CharIterator>
+		Token *createHexToken(CharIterator &it, Token *insertAfterThis, QLinkedList<LineStartPoint>::Iterator &lineStartPoint);
+
+		template <typename CharIterator>
+		Token *createSingleLineCommentToken(CharIterator &it, Token *insertAfterThis, QLinkedList<LineStartPoint>::Iterator &lineStartPoint);
+
+		template <typename CharIterator>
+		Token *createMultiLineCommentToken(CharIterator &it, Token *insertAfterThis, QLinkedList<LineStartPoint>::Iterator &lineStartPoint);
+
+
 		QHash<Document*, Token*> mDocumentStartTokens;
+		QLinkedList<LineStartPoint> mLineStartPoints;
+
 		Token *mFirstToken;
 		Token *mLastToken;
+		QSharedPointer<CodeModelContext> mContext;
+
 };
+
 
 }
 

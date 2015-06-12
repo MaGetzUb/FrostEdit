@@ -1,22 +1,36 @@
 #ifndef CODEPOINT
 #define CODEPOINT
-
+#include <QLinkedList>
+#include <QString>
 class Document;
+
+
+
+class TokenBase;
+struct LineStartPoint {
+	LineStartPoint() : mLineNumber(0), mCharIndex(0), mDocument(0), mNextToken(0) {}
+	LineStartPoint(int lineNum, int charIndex, Document *doc, TokenBase *tok = 0) : mLineNumber(lineNum), mCharIndex(charIndex), mDocument(doc), mNextToken(tok) { }
+	int mLineNumber;
+	int mCharIndex;
+	Document *mDocument;
+	TokenBase *mNextToken;
+};
 
 class CodePoint {
 	public:
-		CodePoint() : mColumn(0), mLine(0), mDocument(0) {}
-		CodePoint(int column, int line, Document *doc) : mColumn(column), mLine(line), mDocument(doc) {}
+		CodePoint() : mColumn(0), mLineStartPoint(){}
+		CodePoint(int column, QLinkedList<LineStartPoint>::Iterator line) : mColumn(column), mLineStartPoint(line) {}
 		~CodePoint() {}
 
 		int column() const { return mColumn; }
-		int line() const { return mLine; }
-		Document *document() const { return mDocument; }
+		int line() const { return mLineStartPoint->mLineNumber; }
+		Document *document() const { return mLineStartPoint->mDocument; }
+
+		QString toString() const;
 
 	private:
 		int mColumn;
-		int mLine;
-		Document *mDocument;
+		QLinkedList<LineStartPoint>::Iterator mLineStartPoint;
 };
 
 #endif // CODEPOINT
