@@ -12,19 +12,16 @@ QWidget
 	background-color: QLinearGradient( x1: 0, y1: 1, x2: 0, y2: 0, stop: 0 #000008, stop: 1 #000024);
 }
 
-QLabel 
-{
+QLabel  {
 	background: transparent;
 }
 
 QWidget:item:hover {
-	color: #fff;
-    background-color: #0099EE;
+    border: 1px solid #0099EE;
 }
 
 QWidget:item:selected {
-	color: #fff;
-	background-color: #EE9900;
+	border: 1px solid #EE9900;
 }
 
 QMenuBar {
@@ -173,8 +170,27 @@ QComboBox::down-arrow
     image: url(icons/down_arrow.png);
 }
 
-QGroupBox:focus
+QGroupBox
 {
+	background: transparent;
+	border: 2px solid #0099EE;
+	right: 10px;
+	
+	border-radius: 5px; 
+	padding: 5px; 
+}
+
+QGroupBox::title
+{
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+	position: 10px;
+	
+    font-size: 18px;
+    font-weight: bold;
+}
+
+QGroupBox:focus {
     /*border: 2px solid QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #ffa02f, stop: 1 #d7801a);*/
 }
 
@@ -240,6 +256,10 @@ QListWidget {
 	border: 0px;
     background-color: #000018;
 	color: #0099EE;
+}
+
+QListWidget::item:selected {
+	border: 1px solid #EE9900;
 }
 
 QListWidget:active {
@@ -511,9 +531,6 @@ QAbstractItemView::selected {
     outline: none;
 }
 
-/* ==================================================================================== */
-/* TREE VIEW                                                                            */
-/* ==================================================================================== */
 
 QTreeView {
     background-color: #000018;
