@@ -51,7 +51,10 @@ SOURCES += main.cpp\
     TextEditor/frostcodemodel.cpp \
     TextEditor/frosttoken.cpp \
     quitdialog.cpp \
-    syntaxstyle.cpp
+    TextEditor/findreplacedialog.cpp \
+    appearancetab.cpp \
+    generalsettingstab.cpp \
+    colorscheme.cpp
 
 
 HEADERS  += \
@@ -100,7 +103,12 @@ HEADERS  += \
     TextEditor/symbol.hpp \
     TextEditor/frosttoken.hpp \
     quitdialog.hpp \
-    syntaxstyle.hpp
+    TextEditor/findreplacedialog.hpp \
+    TextEditor/documentmap.hpp \
+    TextEditor/linenumberarea.hpp \
+    appearancetab.hpp \
+    generalsettingstab.hpp \
+    colorscheme.hpp
 
 
 FORMS    += \
@@ -109,7 +117,10 @@ FORMS    += \
     tabwidgetframe.ui \
     frostdialog.ui \
     settingsmenu.ui \
-    quitdialog.ui
+    quitdialog.ui \
+    TextEditor/findreplacedialog.ui \
+    appearancetab.ui \
+    generalsettingstab.ui
 
 RESOURCES += \
     icons.qrc \
