@@ -18,6 +18,10 @@ class TokenBase
 		const CodePoint &codePoint() const { return mCodePoint; }
 		TokenBase *next() const { return mNextToken; }
 		TokenBase *previous() const { return mPreviousToken; }
+		void setNext(TokenBase *n) { mNextToken = n; }
+		void setPrevious(TokenBase *p) { mPreviousToken = p; }
+
+		int length() const { return mText.length(); }
 	protected:
 		QString mText;
 		CodePoint mCodePoint;

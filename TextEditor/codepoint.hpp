@@ -26,9 +26,14 @@ class CodePoint {
 		int line() const { return mLineStartPoint->mLineNumber; }
 		Document *document() const { return mLineStartPoint->mDocument; }
 
+		int charIndex() const { return mLineStartPoint->mCharIndex + mColumn - 1; }
+
+
 		QString toString() const;
 
-	private:
+		QLinkedList<LineStartPoint>::Iterator lineStartPoint() const;
+
+private:
 		int mColumn;
 		QLinkedList<LineStartPoint>::Iterator mLineStartPoint;
 };

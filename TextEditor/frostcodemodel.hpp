@@ -32,7 +32,7 @@ class FrostCodeModel : public CodeModel
 		Token *findTokenBeforePoint(int i);
 
 		template <typename CharIterator>
-		Token *analyze(CharIterator &it, Token *insertAfterThis, QLinkedList<LineStartPoint>::Iterator &lineStartPoint);
+		Token *analyze(CharIterator &it, Token *insertAfterThis, QLinkedList<LineStartPoint>::Iterator &lineStartPoint, int endCharIndex = -1);
 
 		template <typename CharIterator>
 		Token *createNumberToken(CharIterator &it, Token *insertAfterThis, QLinkedList<LineStartPoint>::Iterator &lineStartPoint);
@@ -53,7 +53,8 @@ class FrostCodeModel : public CodeModel
 		Token *createMultiLineCommentToken(CharIterator &it, Token *insertAfterThis, QLinkedList<LineStartPoint>::Iterator &lineStartPoint);
 
 
-		QHash<Document*, Token*> mDocumentStartTokens;
+		Token::Type resolveIdentifierTokenType(const QString &str) const;
+
 		QLinkedList<LineStartPoint> mLineStartPoints;
 
 		Token *mFirstToken;

@@ -74,7 +74,7 @@ void CodeModelContext::setGlobalSymbols(const QMap<QString, QSharedPointer<Symbo
 }
 
 QSharedPointer<Symbol> CodeModelContext::findSymbol(const QString &symbolName) const {
-	return mGlobalSymbols.value(symbolName, QSharedPointer<Symbol>());
+	return mGlobalSymbols.value(symbolName.toLower(), QSharedPointer<Symbol>());
 }
 QHash<QString, Token::Type> CodeModelContext::keywords() const
 {
@@ -88,7 +88,7 @@ void CodeModelContext::setKeywords(const QHash<QString, Token::Type> &keywords)
 
 Frost::Token::Type CodeModelContext::keyword(const QString &name)
 {
-	return mKeywords.value(name, Token::KeywordsEnd);
+	return mKeywords.value(name.toLower(), Token::KeywordsEnd);
 }
 
 

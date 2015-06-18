@@ -12,7 +12,7 @@
 #include "qate/tabsettings.h"
 #include "fatehighlighter.hpp"
 #include "fatedata.hpp"
-
+#include "codemodel.hpp"
 
 class FrostEdit;
 class DocumentItem;
@@ -26,6 +26,7 @@ class Document : public QTextDocument {
 	TextEditor::Internal::Highlighter* mHighlighter;
 	TextEditor::TabSettings mTabSettings;
 	DocumentItem* mItem;
+	CodeModel *mCodeModel;
 
 	public:
 
@@ -52,6 +53,9 @@ class Document : public QTextDocument {
 		const TextEditor::TabSettings& getTabSettings() const;
 		TextEditor::Internal::Highlighter* getHighlighter() const;
 
+
+		void setCodeModel(CodeModel *codeModel);
+		CodeModel *getCodeModel() const;
 
 		FrostEdit* getEditor() const;
 

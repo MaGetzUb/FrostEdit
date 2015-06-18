@@ -205,6 +205,26 @@ TextEditor::Internal::Highlighter* Document::getHighlighter() const {
 	return mHighlighter;
 }
 
+void Document::setCodeModel(CodeModel *codeModel) {
+	codeModel->setMainDocument(this);
+
+	connect(codeModel, &CodeModel::error, [](const QString &msg, const CodePoint &cp) {
+		qDebug() << "Error " << cp.toString() << ": " << msg;
+	});
+
+	connect(this, &Document::contentsChange, codeModel, &CodeModel::documentEdited);
+
+	codeModel->parse();
+
+
+
+	mCodeModel = codeModel;
+}
+
+CodeModel *Document::getCodeModel() const {
+	return mCodeModel;
+}
+
 
 FrostEdit* Document::getEditor() const {
 	QObject* parentobj = this->parent();

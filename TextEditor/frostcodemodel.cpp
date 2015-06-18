@@ -87,7 +87,7 @@ void FrostCodeModel::parse()
 	deleteAllTokens();
 	mLineStartPoints.clear();
 
-	mLineStartPoints.append(LineStartPoint(1, 0, mMainDocument));
+	mLineStartPoints = QLinkedList<LineStartPoint>() << LineStartPoint(1, 0, mMainDocument);
 	QLinkedList<LineStartPoint>::Iterator lineStartPoint = mLineStartPoints.begin();
 
 	QString code = mMainDocument->toPlainText();
@@ -102,8 +102,67 @@ QList<Symbol *> FrostCodeModel::codeComplete(int position) const
 	return QList<Symbol*>();
 }
 
-void FrostCodeModel::documentEdited(int position, int charsRemoved, int charsAdded)
-{
+void FrostCodeModel::documentEdited(int position, int charsRemoved, int charsAdded) {
+	Document *doc = qobject_cast<Document*>(sender());
+
+	if (doc != mMainDocument) return;
+	if (!mFirstToken) {
+		parse();
+		return;
+	}
+
+	Token *tok = mFirstToken;
+	while (tok && tok->codePoint().charIndex() < position) {
+		tok = tok->next();
+	}
+
+	Token *firstNewToken = 0, *lastNewToken = 0, *firstRemovedToken = 0, *lastRemovedToken = 0;
+	if (!tok) {
+		//Added characters to the end of the document (and maybe removed some withspaces)
+		QLinkedList<LineStartPoint>::Iterator lineStartIt = --mLineStartPoints.end();
+		CharacterAtCharIterator charIt(mMainDocument, position, position - lineStartIt->mCharIndex + 1, lineStartIt->mLineNumber);
+
+		Token *oldLastToken = mLastToken;
+		analyze(charIt, mLastToken, lineStartIt);
+		firstNewToken = oldLastToken->next();
+		lastNewToken = mLastToken;
+	}
+	else {
+		Token *firstPossibleToken = tok->previous();
+		if (firstPossibleToken->codePoint().charIndex() + firstPossibleToken->length() >= position) {
+			firstRemovedToken = firstPossibleToken;
+		}
+		else if ( tok->codePoint().charIndex() < position + charsRemoved){
+			firstRemovedToken = tok;
+		}
+		else {
+
+		}
+
+
+		lastRemovedToken = firstRemovedToken;
+		while (lastRemovedToken && lastRemovedToken->codePoint().charIndex() < position + charsRemoved) {
+			lastRemovedToken = lastRemovedToken->next();
+		}
+		if (lastRemovedToken && lastRemovedToken != firstRemovedToken) lastRemovedToken = lastRemovedToken->previous();
+
+		Token *lastNotRemoved = firstRemovedToken->previous();
+		Token *firstNotRemoved = lastRemovedToken->next();
+
+		if (lastNotRemoved) {
+			lastNotRemoved->setNext(firstNotRemoved);
+			if (firstNotRemoved == 0) mFirstToken = lastNotRemoved;
+		}
+		firstRemovedToken->setPrevious(0);
+
+		if (firstNotRemoved) {
+			firstNotRemoved->setPrevious(lastNotRemoved);
+			if (lastNotRemoved == 0) mLastToken = lastNotRemoved;
+		}
+		lastRemovedToken->setNext(0);
+
+
+	}
 
 }
 
@@ -155,6 +214,12 @@ Token *FrostCodeModel::findTokenBeforePoint(int i)
 
 }
 
+Token::Type FrostCodeModel::resolveIdentifierTokenType(const QString &str) const {
+	Token::Type type = mContext->keyword(str);
+	if (type != Token::KeywordsEnd) return type;
+	return Token::Identifier;
+}
+
 
 static bool isHexChar(QChar c) {
 	QChar lower = c.toLower();
@@ -163,11 +228,12 @@ static bool isHexChar(QChar c) {
 
 
 template <typename CharIterator>
-Token *FrostCodeModel::analyze(CharIterator &it, Token *insertAfterThis, QLinkedList<LineStartPoint>::Iterator &lineStartPoint) {
+Token *FrostCodeModel::analyze(CharIterator &it, Token *insertAfterThis, QLinkedList<LineStartPoint>::Iterator &lineStartPoint, int endCharIndex) {
 
-	while(!it.isEndOfFile()) {
+	while(!it.isEndOfFile() && (endCharIndex > -1 && it.charIndex() <= endCharIndex)) {
 		QChar c = it.value();
-		if (c == '=') {
+		if (c.isSpace() || c == '\t') { }
+		else if (c == '=') {
 			if (!it.next().isEndOfFile()) {
 				if (it.next().value() == '<') {
 					insertAfterThis = createToken(insertAfterThis, Token::opLessEqual, "=<", lineStartPoint, it.column());
@@ -271,6 +337,9 @@ Token *FrostCodeModel::analyze(CharIterator &it, Token *insertAfterThis, QLinked
 		else if (c == '.') {
 			insertAfterThis = createToken(insertAfterThis, Token::opDot, ".", lineStartPoint, it.column());
 		}
+		else {
+			emit warning(tr("Unhandled character %1").arg(c), CodePoint(it.column(), lineStartPoint));
+		}
 		it = it.next();
 	}
 	return insertAfterThis;
@@ -364,7 +433,7 @@ Token *FrostCodeModel::createIdentifierToken(CharIterator &it, Token *insertAfte
 	}
 
 
-	Token::Type tokenType = mContext->keyword(text);
+	Token::Type tokenType = resolveIdentifierTokenType(text);
 
 	if (tokenType == Token::MultiLineComment) {
 		it = start;
@@ -372,11 +441,7 @@ Token *FrostCodeModel::createIdentifierToken(CharIterator &it, Token *insertAfte
 	}
 
 	it = lastIt;
-	if (tokenType != Token::KeywordsEnd) {
-		return createToken(insertAfterThis, tokenType, text, lineStartPoint, start.column());
-	}
-
-	return createToken(insertAfterThis, Token::Identifier, text, lineStartPoint, start.column());
+	return createToken(insertAfterThis, tokenType, text, lineStartPoint, start.column());
 }
 
 template <typename CharIterator>
