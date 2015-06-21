@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AppearanceTab</class>
+ <widget class="QWidget" name="AppearanceTab">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>534</width>
+    <height>397</height>
+   </rect>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_5">
+   <item row="0" column="0">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Text Editor</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_6">
+      <item row="0" column="0">
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="12" column="0">
+         <widget class="QListWidget" name="issueFormats"/>
+        </item>
+        <item row="10" column="0">
+         <widget class="QListWidget" name="consoleFormats"/>
+        </item>
+        <item row="11" column="0">
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>Issue list</string>
+          </property>
+         </widget>
+        </item>
+        <item row="9" column="0">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Console colors</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Editor/Syntax colors:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0" rowspan="6">
+         <widget class="QListWidget" name="syntaxFormats"/>
+        </item>
+        <item row="5" column="6">
+         <widget class="QToolButton" name="dontUseBGButton">
+          <property name="text">
+           <string>Don't use</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="3">
+         <widget class="QLabel" name="label_8">
+          <property name="text">
+           <string>Background:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="13" column="0">
+         <layout class="QGridLayout" name="gridLayout_3">
+          <item row="0" column="2">
+           <widget class="QToolButton" name="saveStyleSheetAs">
+            <property name="text">
+             <string>Save as</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QToolButton" name="saveStyleSheet">
+            <property name="text">
+             <string>Save</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QToolButton" name="openStyleSheet">
+            <property name="text">
+             <string>Open</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
+           <widget class="QLabel" name="colorSchemeView">
+            <property name="text">
+             <string>Current colorscheme:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QToolButton" name="resetColorSchemeButton">
+            <property name="text">
+             <string>Reset to default</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QToolButton" name="textFont">
+            <property name="text">
+             <string>Select a font</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="fontNameView">
+            <property name="text">
+             <string>Current font: </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item row="4" column="6">
+         <widget class="QToolButton" name="dontUseFGButton">
+          <property name="text">
+           <string>Don't use</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="3">
+         <widget class="QLabel" name="label_7">
+          <property name="text">
+           <string>Foreground:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="5">
+         <widget class="QToolButton" name="textBackgroundColor">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="5">
+         <widget class="QToolButton" name="textForegroundColor">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="3">
+         <widget class="QCheckBox" name="fontFormatBold">
+          <property name="text">
+           <string>Bold</string>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="3">
+         <widget class="QCheckBox" name="fontFormatItalic">
+          <property name="text">
+           <string>Italic</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="title">
+      <string>Editor stylesheet</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_7">
+      <item row="0" column="2">
+       <widget class="QLabel" name="stylesheetLabel">
+        <property name="text">
+         <string>Current stylesheet: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QToolButton" name="toolButton">
+        <property name="text">
+         <string>Don't use</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QToolButton" name="selectStyleSheetButton">
+        <property name="text">
+         <string>Select stylesheet</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <spacer name="horizontalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <layout class="QGridLayout" name="gridLayout_4"/>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
