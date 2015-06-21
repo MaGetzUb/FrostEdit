@@ -1,7 +1,7 @@
 #include "frostedit.hpp"
 #include "ui_frostedit.h"
 #include <QDebug>
-
+#include <QLineEdit>
 #include <QStringList>
 #include <QFileDialog>
 #include <QDropEvent>
@@ -35,7 +35,9 @@ FrostEdit::FrostEdit(QWidget *parent) :
 	mFileIconProvider(),
 	mMimeDatabase(new Qate::MimeDatabase),
 	mHiltDefManager(Qate::HighlightDefinitionManager::instance()),
-	mFrostCompilerErrorRegEx("\\\"(.*)\\\"\\s+\\[\\s*(\\d+)\\,\\s*(\\d*)\\s*\\]\\s+(Warning|Error)\\s+(\\d+)\\:\\s+(.*)")
+	mFrostCompilerErrorRegEx("\\\"(.*)\\\"\\s+\\[\\s*(\\d+)\\,\\s*(\\d*)\\s*\\]\\s+(Warning|Error)\\s+(\\d+)\\:\\s+(.*)"),
+	mFindReplace(new FindReplaceDialog(this)),
+	mSettingsMenu(new SettingsMenu(this))
 {
 
 	mDocumentWatcher = new QFileSystemWatcher(this);
@@ -54,12 +56,18 @@ FrostEdit::FrostEdit(QWidget *parent) :
 		connectTabWidgetFrameSignals(tab);
 	}
 
+
+
 	connect(this, SIGNAL(tabWidgetChanged(TabWidget*)), this, SLOT(setActiveTabWidget(TabWidget*)));
 	currentTabPageChanged(0);
 	connect(mCurrentTabWidget, SIGNAL(currentChanged(int)), this, SLOT(currentTabPageChanged(int)));
 
 	connect(mFrostCompiler, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(compileFinished(int, QProcess::ExitStatus)));
 
+	connect(mFindReplace, SIGNAL(findTriggered()), this, SLOT(findFromTextEdit()));
+	connect(mFindReplace, SIGNAL(findReplaceTriggered()), this, SLOT(findAndReplaceFromTextEdit()));
+	connect(mFindReplace, SIGNAL(replaceAllTriggered()), this, SLOT(replaceAllFromTextEdit()));
+	connect(mFindReplace, SIGNAL(settingsChanged(QString)), this, SLOT(pointOutOccurances(QString)));
 
 	ui->browserWidget->setVisible(false);
 
@@ -102,7 +110,7 @@ FrostEdit::FrostEdit(QWidget *parent) :
 	ui->consoleTabs->addTab(mCompileOutput, "Console");
 	ui->consoleTabs->addTab(mApplicationOutput, "Application");
 	connect(mIssueList, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(pointToIssue(QListWidgetItem*)));
-
+	connect(mSettingsMenu, SIGNAL(settingsApplied()), this, SLOT(applySettings()));
 
 
 	mCompileOutput->show();
@@ -148,6 +156,8 @@ FrostEdit::~FrostEdit() {
 	}
 
 	delete mDocumentWatcher;
+	delete mFindReplace;
+	delete mSettingsMenu;
 	delete ui;
 }
 
@@ -165,6 +175,7 @@ void FrostEdit::dropEvent(QDropEvent* e)  {
 void FrostEdit::dragEnterEvent(QDragEnterEvent* e) {
 	e->accept();
 }
+
 
 void FrostEdit::fileChangedOutside(QString str) {
 	blockSignals(true);
@@ -185,13 +196,16 @@ void FrostEdit::updateTabHeader(Document* doc, bool b) {
 			}
 		}
 	}
+
 }
 
 void FrostEdit::updateSettings() {
-	loadStyleSheet(Settings::get("Appearance/StyleSheet", "").toString());
+	loadStyleSheet(Settings::get("Appearance/Stylesheet", "").toString());
 	mSyntaxStyle.load(Settings::get("Appearance/Colorscheme").toString());
+	mSettingsMenu->appearanceTab()->setSyntaxStyle(&mSyntaxStyle);
 	mFont.setFamily(Settings::get("TextEditor/Font", "Lucida Console").toString());
 	mFont.setPointSize(Settings::get("TextEditor/FontSize", 10).toInt());
+	mSettingsMenu->appearanceTab()->setTextEditFont(mFont);
 	Settings::instance().sync();
 }
 
@@ -215,6 +229,7 @@ void FrostEdit::addEditor(QListWidgetItem* item) {
 	}
 
 	TextEdit* edit = new TextEdit(mCurrentTabWidget, doc);
+	edit->setFindReplaceInstance(mFindReplace);
 	edit->setFont(mFont);
 	mSyntaxStyle.applyToTextEdit(edit);
 	mCurrentTabWidget->addTab(edit, doc->getDynamicName());
@@ -246,6 +261,7 @@ void FrostEdit::addEditor(TabWidgetFrame* wid, const QString& str) {
 	}
 
 	TextEdit* edit = new TextEdit(wid->tabWidget(), doc);
+	edit->setFindReplaceInstance(mFindReplace);
 	edit->setFont(mFont);
 	mSyntaxStyle.applyToTextEdit(edit);
 
@@ -392,7 +408,7 @@ void FrostEdit::currentTabPageChanged(int id) {
 		ui->actionCompileAndRun->setDisabled(true);
 		ui->actionSave->setDisabled(true);
 		ui->actionSave_As->setDisabled(true);
-
+		ui->actionFind->setDisabled(true);
 		ui->compile->setDisabled(true);
 		ui->compile_build->setDisabled(true);
 	} else { //there was editor, enable them
@@ -405,6 +421,7 @@ void FrostEdit::currentTabPageChanged(int id) {
 		ui->actionCompileAndRun->setEnabled(true);
 		ui->actionSave->setEnabled(true);
 		ui->actionSave_As->setEnabled(true);
+		ui->actionFind->setEnabled(true);
 		ui->compile->setEnabled(true);
 		ui->compile_build->setEnabled(true);
 	}
@@ -917,6 +934,10 @@ FrostDialog* FrostEdit::toFrostDialog(QWidget* wid) {
 	return qobject_cast<FrostDialog*>(wid);
 }
 
+Console*FrostEdit::toConsole(QWidget* wid) {
+	return qobject_cast<Console*>(wid);
+}
+
 void FrostEdit::updateTabWidget(TabWidget* tabwid) {
 	if(mCurrentTabWidget != tabwid && tabwid != nullptr) {
 		emit tabWidgetChanged(tabwid);
@@ -971,10 +992,16 @@ void FrostEdit::loadStyleSheet(const QString& sheet) {
 	if(sheet.isEmpty())
 		setStyleSheet("");
 	QFile style(sheet);
+	if(!style.exists())
+		return;
 	if(style.open(QIODevice::ReadOnly | QIODevice::Text)) {
 		setStyleSheet(style.readAll());
 		style.close();
 	}
+}
+
+TextEdit* FrostEdit::currentTextEdit() {
+	return toTextEdit(mCurrentTabWidget->currentWidget());
 }
 
 
@@ -1002,7 +1029,7 @@ void FrostEdit::closeEvent(QCloseEvent* e) {
 			return;
 		}
 	}
-
+	mFindReplace->setHidden(true);
 	e->accept();
 }
 
@@ -1018,4 +1045,70 @@ void FrostEdit::on_close_clicked() {
 			delete proc;
 		}
 	}
+}
+
+void FrostEdit::findFromTextEdit() {
+	if(currentTextEdit() != nullptr)
+		currentTextEdit()->find();
+}
+
+void FrostEdit::findAndReplaceFromTextEdit() {
+	if(currentTextEdit() != nullptr)
+		currentTextEdit()->findReplace();
+}
+
+void FrostEdit::replaceAllFromTextEdit() {
+	if(currentTextEdit() != nullptr)
+		currentTextEdit()->replaceAll();
+}
+
+void FrostEdit::pointOutOccurances(QString str) {
+	if(currentTextEdit() != nullptr)
+		currentTextEdit()->showOccurances(str);
+}
+
+void FrostEdit::on_actionFind_triggered() {
+	mFindReplace->show();
+}
+
+void FrostEdit::on_actionSettings_triggered() {
+	mSettingsMenu->show();
+}
+
+void FrostEdit::applySettings() {
+	loadStyleSheet(Settings::get("Appearance/StyleSheet", "").toString());
+	//mSyntaxStyle.load(Settings::get("Appearance/Colorscheme").toString());
+	//mSettingsMenu->setSyntaxStyle(&mSyntaxStyle);
+	mFont.setFamily(Settings::get("TextEditor/Font", "Lucida Console").toString());
+	mFont.setPointSize(Settings::get("TextEditor/FontSize", 10).toInt());
+
+	for(TabWidgetFrame* tabf: mTabWidgetFrames) {
+		TabWidget* wid =tabf->tabWidget();
+		for(int i = 0; i < wid->count(); i++) {
+			TextEdit* e = toTextEdit(wid->widget(i));
+			e->setFont(mFont);
+			mSyntaxStyle.applyToTextEdit(e);
+		}
+	}
+
+
+	for(auto i: mOpenDocuments.keys()) {
+		Document* doc = mOpenDocuments[i];
+		TextEditor::Internal::Highlighter* hilt = doc->getHighlighter();
+
+		if(hilt != nullptr) {
+			qDebug() << "Found a highlighter!";
+			mSyntaxStyle.applyToHighlighter(hilt);
+			hilt->rehighlight();
+		}
+	}
+
+	for(int i = 0; i < mApplicationOutput->count(); i++) {
+		Console* c = toConsole(mApplicationOutput->widget(i));
+		mSyntaxStyle.applyToConsole(c);
+	}
+
+	mSyntaxStyle.applyToConsole(mCompileOutput);
+	mSyntaxStyle.applyToIssueList(mIssueList);
+
 }

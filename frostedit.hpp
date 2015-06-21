@@ -15,11 +15,13 @@
 
 #include "settings.hpp"
 #include "TextEditor/document.hpp"
+#include "TextEditor/findreplacedialog.hpp"
+#include "settingsmenu.hpp"
 #include "tabwidgetframe.hpp"
 #include "console.hpp"
 #include "tabwidget.hpp"
 #include "documentitem.hpp"
-#include "syntaxstyle.hpp"
+#include "colorscheme.hpp"
 
 #include "TextEditor/qate/highlighter.h"
 #include "TextEditor/qate/highlightdefinition.h"
@@ -55,6 +57,9 @@ class FrostEdit : public QMainWindow {
 		QSharedPointer<TextEditor::Internal::HighlightDefinition> mHiltDef;
 		QFileIconProvider mFileIconProvider;
 
+		FindReplaceDialog* mFindReplace;
+		SettingsMenu* mSettingsMenu;
+
 		QFileInfo mCompileFile;
 
 		QProcess* mFrostCompiler;
@@ -69,13 +74,15 @@ class FrostEdit : public QMainWindow {
 		int mNewCount;
 		QString mCompiledFile;
 
-		SyntaxStyle mSyntaxStyle;
+		Colorscheme mSyntaxStyle;
 	public:
 		static QString gAppName;
 		explicit FrostEdit(QWidget *parent = 0);
 		~FrostEdit();
 		void dropEvent(QDropEvent *);
 		void dragEnterEvent(QDragEnterEvent *);
+
+
 	public slots:
 		void fileChangedOutside(QString);
 		void updateTabHeader(Document*, bool);
@@ -128,6 +135,7 @@ class FrostEdit : public QMainWindow {
 		void printCompileStandardError();
 		void printCompile();
 
+
 		void compile();
 
 		void compileFinished(int, QProcess::ExitStatus);
@@ -142,6 +150,16 @@ class FrostEdit : public QMainWindow {
 
 		void on_close_clicked();
 
+		void findFromTextEdit();
+		void findAndReplaceFromTextEdit();
+		void replaceAllFromTextEdit();
+		void pointOutOccurances(QString);
+		void on_actionFind_triggered();
+
+		void on_actionSettings_triggered();
+
+		void applySettings();
+
 	signals:
 		void tabWidgetChanged(TabWidget*);
 		void documentChanged(Document*);
@@ -149,6 +167,8 @@ class FrostEdit : public QMainWindow {
 
 		int documentSafeClose(Document* );
 		void loadStyleSheet(const QString&);
+
+		TextEdit* currentTextEdit();
 
 		void connectTabWidgetFrameSignals(TabWidgetFrame*);
 		void closeEvent(QCloseEvent *);
@@ -160,6 +180,7 @@ class FrostEdit : public QMainWindow {
 		Document* toDocument(QTextDocument*);
 		TabWidgetFrame* toTabWidgetFrame(QWidget*);
 		FrostDialog* toFrostDialog(QWidget*);
+		Console* toConsole(QWidget*);
 
 		void updateTabWidget(TabWidget* tabwid);
 
