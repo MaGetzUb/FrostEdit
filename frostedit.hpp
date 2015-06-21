@@ -81,7 +81,9 @@ class FrostEdit : public QMainWindow {
 		~FrostEdit();
 		void dropEvent(QDropEvent *);
 		void dragEnterEvent(QDragEnterEvent *);
+                void disableActions();
 
+                void enableActions();
 
 	public slots:
 		void fileChangedOutside(QString);

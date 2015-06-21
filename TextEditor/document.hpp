@@ -54,8 +54,10 @@ class Document : public QTextDocument {
 		TextEditor::Internal::Highlighter* getHighlighter() const;
 
 
+		void setCodeModel(CodeModel *codeModel);
+		CodeModel *getCodeModel() const;
+
 		FrostEdit* getEditor() const;
-		void setCodeModel(CodeModel* model);
 
 
 	public slots:

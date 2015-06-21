@@ -176,7 +176,6 @@ void FrostEdit::dragEnterEvent(QDragEnterEvent* e) {
 	e->accept();
 }
 
-
 void FrostEdit::fileChangedOutside(QString str) {
 	blockSignals(true);
 	QFileInfo finfo(str);
@@ -196,7 +195,6 @@ void FrostEdit::updateTabHeader(Document* doc, bool b) {
 			}
 		}
 	}
-
 }
 
 void FrostEdit::updateSettings() {
@@ -387,41 +385,51 @@ void FrostEdit::closeTab(TabWidget* wid, int id) {
 
 }
 
+void FrostEdit::disableActions() {
+	ui->actionCut->setDisabled(true);
+	ui->actionPaste->setDisabled(true);
+	ui->actionUndo->setDisabled(true);
+	ui->actionRedo->setDisabled(true);
+	ui->actionCompile->setDisabled(true);
+	ui->actionCompileAndRun->setDisabled(true);
+	ui->actionSave->setDisabled(true);
+	ui->actionSave_As->setDisabled(true);
+	ui->actionCopy->setDisabled(true);
+}
+
+void FrostEdit::enableActions() {
+	ui->actionCopy->setEnabled(true);
+	ui->actionCut->setEnabled(true);
+	ui->actionPaste->setEnabled(true);
+	ui->actionUndo->setEnabled(true);
+	ui->actionRedo->setEnabled(true);
+	ui->actionCompile->setEnabled(true);
+	ui->actionCompileAndRun->setEnabled(true);
+	ui->actionSave->setEnabled(true);
+	ui->actionSave_As->setEnabled(true);
+}
+
 void FrostEdit::currentTabPageChanged(int id) {
-	if(id == -1)
-		goto disableAll;
+	if(id == -1) {
+		disableActions();
+		return;
+	}
 	QWidget* wid = mCurrentTabWidget->widget(id);
-	if(wid == nullptr)
-		goto disableAll;
+	if(wid == nullptr) {
+		disableActions();
+		return;
+	}
 	TextEdit* e = toTextEdit(wid);
 	if(e != nullptr &&  e->document() != getActiveDocument())
 		emit documentChanged(toDocument(e->document()));
 	//if there's no editor, let's disable some buttons.
 	if(e == nullptr) {
-		disableAll:
-		ui->actionCopy->setDisabled(true);
-		ui->actionCut->setDisabled(true);
-		ui->actionPaste->setDisabled(true);
-		ui->actionUndo->setDisabled(true);
-		ui->actionRedo->setDisabled(true);
-		ui->actionCompile->setDisabled(true);
-		ui->actionCompileAndRun->setDisabled(true);
-		ui->actionSave->setDisabled(true);
-		ui->actionSave_As->setDisabled(true);
+		disableActions();
 		ui->actionFind->setDisabled(true);
 		ui->compile->setDisabled(true);
 		ui->compile_build->setDisabled(true);
 	} else { //there was editor, enable them
-		ui->actionCopy->setEnabled(true);
-		ui->actionCut->setEnabled(true);
-		ui->actionPaste->setEnabled(true);
-		ui->actionUndo->setEnabled(true);
-		ui->actionRedo->setEnabled(true);
-		ui->actionCompile->setEnabled(true);
-		ui->actionCompileAndRun->setEnabled(true);
-		ui->actionSave->setEnabled(true);
-		ui->actionSave_As->setEnabled(true);
-		ui->actionFind->setEnabled(true);
+		enableActions();
 		ui->compile->setEnabled(true);
 		ui->compile_build->setEnabled(true);
 	}

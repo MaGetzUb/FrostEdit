@@ -45,16 +45,17 @@ SOURCES += main.cpp\
     TextEditor/qate/tabsettings.cpp \
     TextEditor/fatehighlighter.cpp \
     documentitem.cpp \
-    documentitem.cpp \
     settings.cpp \
     TextEditor/codemodel.cpp \
     TextEditor/frostcodemodel.cpp \
     TextEditor/frosttoken.cpp \
     quitdialog.cpp \
     TextEditor/findreplacedialog.cpp \
+    TextEditor/frostcodemodelcontext.cpp \
     appearancetab.cpp \
     generalsettingstab.cpp \
-    colorscheme.cpp
+    colorscheme.cpp \
+    TextEditor/codepoint.cpp
 
 
 HEADERS  += \
@@ -104,12 +105,14 @@ HEADERS  += \
     TextEditor/frosttoken.hpp \
     quitdialog.hpp \
     TextEditor/findreplacedialog.hpp \
+    syntaxstyle.hpp \
     TextEditor/documentmap.hpp \
+    TextEditor/frostcodemodelcontext.hpp \
+    TextEditor/tokenbase.hpp \
     TextEditor/linenumberarea.hpp \
     appearancetab.hpp \
     generalsettingstab.hpp \
     colorscheme.hpp
-
 
 FORMS    += \
     tabwidget.ui \
@@ -124,4 +127,3 @@ FORMS    += \
 
 RESOURCES += \
     icons.qrc \
-    icons.qrc

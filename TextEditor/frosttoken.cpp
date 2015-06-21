@@ -2,16 +2,13 @@
 namespace Frost {
 
 Token::Token(Token::Type type, const QString &text, const CodePoint &cp, Token *previousToken) :
-	mType(type),
-	mText(text),
-	mCodePoint(cp),
-	mPreviousToken(previousToken)
+	TokenBase(text, cp, previousToken),
+	mType(type)
 {
-	previousToken->mNextToken = this;
+
 }
 
 Token::~Token() {
-
 }
 
 }

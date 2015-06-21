@@ -2,9 +2,10 @@
 #define FROSTTOKEN_H
 #include "codepoint.hpp"
 #include <QString>
+#include "tokenbase.hpp"
 
 namespace Frost {
-class Token
+class Token : public TokenBase
 {
 	public:
 		enum Type {
@@ -18,6 +19,9 @@ class Token
 			Label,
 			Colon, // :
 			Comma,
+
+			SingleLineComment,
+			MultiLineComment,
 
 			IntegerTypeMark, //%
 			StringTypeMark, //$
@@ -114,14 +118,10 @@ class Token
 		Type type() const { return mType; }
 		const QString &text() const { return mText; }
 		const CodePoint &codePoint() const { return mCodePoint; }
-		Token *next() const { return mNextToken; }
-		Token *previous() const { return mPreviousToken; }
+		Token *next() const { return static_cast<Token*>(mNextToken); }
+		Token *previous() const { return static_cast<Token*>(mPreviousToken); }
 	private:
 		Type mType;
-		QString mText;
-		CodePoint mCodePoint;
-		Token *mNextToken;
-		Token *mPreviousToken;
 };
 
 }
