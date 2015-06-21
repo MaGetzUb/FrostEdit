@@ -15,10 +15,14 @@
 #include <QMenu>
 #include <QContextMenuEvent>
 #include <QWheelEvent>
+#include <QTextBrowser>
 
-#include "syntaxstyle.hpp"
+#include "colorscheme.hpp"
 #include "qate/qateblockdata.h"
 #include "qate/tabsettings.h"
+
+
+
 class TextBlockSelection {
 	public:
 
@@ -44,15 +48,16 @@ class TextBlockSelection {
 		void fromSelection(const TextEditor::TabSettings &ts, const QTextCursor &selection);
 };
 
-
-
-class SyntaxStyle;
+class DocumentMap;
+class FrostEdit;
+class FindReplaceDialog;
+class Colorscheme;
 class LineNumberArea;
 class TextBlockUserData;
 class TextEdit : public QPlainTextEdit {
 		Q_OBJECT
-		QWidget* mLineNumberWidget;
-		QWidget* mDocumentWatcher;
+		LineNumberArea* mLineNumberWidget;
+		DocumentMap* mDocumentWatcher;
 
 		QRect mViewportRect;
 		QWidget* mParentWidget;
@@ -69,6 +74,8 @@ class TextEdit : public QPlainTextEdit {
 		bool mClicked;
 		int mCurrentBlockCount;
 
+		FrostEdit* mFrostEditInstance;
+
 		QTextCharFormat mLineNumberFormat;
 		QTextCharFormat mSelectedLineNumberFormat;
 		QTextCharFormat mSimilarOccurance;
@@ -78,18 +85,21 @@ class TextEdit : public QPlainTextEdit {
 		QTextCharFormat mSelectedParenthesis;
 		QTextCharFormat mErrorUnderlineFormat;
 
+		FindReplaceDialog* mFindReplaceDialog;
 		TextBlockSelection mBlockSelection;
 		bool mIsBlockSelection;
 
-		SyntaxStyle* mSyntaxStyle;
+		Colorscheme* mSyntaxStyle;
 
 		QFont mFont;
+
+		QTextCursor mFoundPosition;
 
 	public:
 		explicit TextEdit(QWidget* parent = 0);
 		explicit TextEdit(QWidget* parent, Document* doc);
 		~TextEdit();
-
+		void setFindReplaceInstance(FindReplaceDialog* instance);
 
 		void initCompleter();
 		void setTabSettings(const TextEditor::TabSettings& settings);
@@ -108,7 +118,7 @@ class TextEdit : public QPlainTextEdit {
 		void setSelectedLine(const QTextCharFormat& fmt);
 		void setRegionVisualizerFormat(const QTextCharFormat& fmt);
 		void setRegionVisualizerSelectedFormat(const QTextCharFormat& fmt);
-		void setmSelectedParenthesisFormat(const QTextCharFormat& fmt);
+		void setSelectedParenthesesFormat(const QTextCharFormat& fmt);
 		void setErrorUnderlineFormat(const QTextCharFormat& fmt);
 
 		void setFont(const QFont &);
@@ -136,7 +146,6 @@ class TextEdit : public QPlainTextEdit {
 
 		void setCursorPosition(int row, int column);
 
-		void find(const QString& str);
 		void setBlocksVisible(QList<QTextBlock>& blocks, bool visible);
 		void updateHeight();
 	private:
@@ -149,6 +158,7 @@ class TextEdit : public QPlainTextEdit {
 		void drawModification(QPainter&, QTextBlock&, int top, int bottom, int space);
 		void autoIndentCursor(QTextCursor&);
 		void updateFont();
+
 
 		bool startsRegion(const QTextBlock&, int&);
 		inline bool startsRegion(const QTextBlock& block) {int tmp; return startsRegion(block, tmp);}
@@ -172,93 +182,18 @@ class TextEdit : public QPlainTextEdit {
 
 	public slots:
 		void autoIndent();
+		void find();
+		void findReplace();
+		void replaceAll();
+		void showOccurances(const QString& str);
+
 	private slots:
+
 		void insertCompletion(const QString&);
 		void updateDocumentLength(int newBlockCount);
 		void updateLineNumberArea(const QRect&, int);
 		void highlightCurrentLine();
 		void handleBlockSelection(int rowdiff, int coldiff);
-};
-
-
-
-class DocumentMap : public QWidget {
-
-		Q_OBJECT
-
-		TextEdit* mTextEdit;
-	public:
-		DocumentMap(TextEdit *editor):QWidget(editor), mTextEdit(editor){}
-		QSize sizeHint() const {
-			return QSize(mTextEdit->documentWatcherWidth(), 0);
-		}
-
-
-	protected:
-
-		void paintEvent(QPaintEvent *e) {
-			mTextEdit->documentWatchPaintEvent(e);
-		}
-
-		void mousePressEvent(QMouseEvent *e) {
-			mTextEdit->documentWatchMousePressEvent(e);
-		}
-
-		void mouseReleaseEvent(QMouseEvent *e) {
-			mTextEdit->documentWatchMouseReleaseEvent(e);
-		}
-
-		void mouseMoveEvent(QMouseEvent *e) {
-			mTextEdit->documentWatchMouseMoveEvent(e);
-		}
-};
-
-
-class LineNumberArea : public QWidget {
-	friend class TextEdit;
-		Q_OBJECT
-
-		TextEdit *mTextEdit;
-		QAction* mBookMarkAction;
-		QAction* mBreakPointAction;
-		bool mIsSelection;
-	public:
-		LineNumberArea(TextEdit *editor):
-			QWidget(editor),
-			mTextEdit(editor),
-			mBookMarkAction(new QAction("Toggle bookmark", this)),
-			mBreakPointAction(new QAction("Toggle breakpoint", this)){
-			mBookMarkAction->setCheckable(true);
-			mBreakPointAction->setCheckable(true);
-			setMouseTracking(true);
-		}
-		QSize sizeHint() const {
-			return QSize(mTextEdit->lineNumberAreaWidth(), 0);
-		}
-	protected:
-		void paintEvent(QPaintEvent *e) {
-			mTextEdit->lineNumberAreaPaintEvent(e);
-		}
-
-		void mousePressEvent(QMouseEvent *e) {
-			mTextEdit->lineNumberAreaMousePressEvent(e);
-		}
-
-		void mouseReleaseEvent(QMouseEvent *e) {
-			mTextEdit->lineNumberAreaMouseReleaseEvent(e);
-		}
-
-		void mouseMoveEvent(QMouseEvent* e) {
-			mTextEdit->lineNumberAreaMouseMoveEvent(e);
-		}
-
-		void wheelEvent(QWheelEvent *e) {
-			mTextEdit->lineNumberAreaWheelEvent(e);
-		}
-
-		void contextMenuEvent(QContextMenuEvent* e) {
-			mTextEdit->lineNumberAreaContextMenuEvent(e);
-		}
 
 };
 
