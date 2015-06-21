@@ -14,7 +14,8 @@ Document::Document(QObject* parent, const QString file, DocumentItem* item):
 	QTextDocument(parent),
 	mFile(file),
 	mHighlighter(nullptr),
-	mItem(item)
+	mItem(item),
+	mCodeModel(nullptr)
 {
 	setDocumentLayout(new QPlainTextDocumentLayout(this));
 
@@ -40,6 +41,8 @@ Document::~Document() {
 		delete mHighlighter;
 	if(mItem != nullptr)
 		delete mItem;
+	if(mCodeModel != nullptr)
+		delete mCodeModel;
 }
 
 void Document::reload() {
@@ -120,7 +123,8 @@ void Document::lexicalAnalyze()
 }
 
 void Document::parse() {
-
+	if(mCodeModel != nullptr)
+		mCodeModel->parse();
 }
 
 void Document::emitTextChanged(bool b) {
@@ -209,6 +213,11 @@ TextEditor::Internal::Highlighter* Document::getHighlighter() const {
 FrostEdit* Document::getEditor() const {
 	QObject* parentobj = this->parent();
 	return qobject_cast<FrostEdit*>(parentobj);
+}
+
+void Document::setCodeModel(CodeModel* model) {
+	mCodeModel = model;
+	connect(this, SIGNAL(contentsChange(int,int,int)), mCodeModel, SLOT(documentEdited(int,int,int)));
 }
 
 
