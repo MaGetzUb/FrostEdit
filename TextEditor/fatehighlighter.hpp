@@ -133,7 +133,11 @@ class FateHighlighter : public Highlighter {
 
 		//void setParentheseFormat(const QTextCharFormat&);
 		void setOperatorFmt(const QTextCharFormat&);
-
+		void setLocalFmt(const QTextCharFormat&);
+		void setGlobalFmt(const QTextCharFormat&);
+		void setFieldFmt(const QTextCharFormat&);
+		void setUserDefinedFunctionFmt(const QTextCharFormat&);
+		void setUserDefinedStructureFmt(const QTextCharFormat&);
 	protected:
 		virtual void highlightBlock(const QString &text);
 

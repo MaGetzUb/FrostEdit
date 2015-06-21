@@ -86,6 +86,26 @@ void FateHighlighter::setOperatorFmt(const QTextCharFormat& fmt) {
 	mOperatorFmt = fmt;
 }
 
+void FateHighlighter::setLocalFmt(const QTextCharFormat& fmt) {
+	mLocalFmt = fmt;
+}
+
+void FateHighlighter::setGlobalFmt(const QTextCharFormat& fmt) {
+	mGlobalFmt = fmt;
+}
+
+void FateHighlighter::setFieldFmt(const QTextCharFormat& fmt) {
+	mFieldFmt = fmt;
+}
+
+void FateHighlighter::setUserDefinedFunctionFmt(const QTextCharFormat& fmt) {
+	mFunctionFmt = fmt;
+}
+
+void FateHighlighter::setUserDefinedStructureFmt(const QTextCharFormat& fmt) {
+	mStructureFmt = fmt;
+}
+
 void FateHighlighter::highlightBlock(const QString &text) {
 	for(int i = 0; i < text.length(); i++) {
 		if(Utils::isSeparator(text[i])) {
@@ -93,8 +113,6 @@ void FateHighlighter::highlightBlock(const QString &text) {
 		}
 	}
 	Highlighter::highlightBlock(text);
-
-
 }
 
 
