@@ -22,6 +22,7 @@ QWidget:item:hover {
 
 QWidget:item:selected {
 	border: 1px solid #EE9900;
+	color: #FFFFFF;
 }
 
 QMenuBar {
