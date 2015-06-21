@@ -13,7 +13,7 @@ void IssueList::addError(const QString& wholeMsg, const QString& file, const QSt
 	item->setFile(file);
 	item->setRow(row);
 	item->setColumn(column);
-	item->setForeground(QBrush(Qt::red));
+	item->setFormat(mErrorFormat);
 	addItem(item);
 }
 
@@ -23,6 +23,7 @@ void IssueList::addWarning(const QString& wholeMsg, const QString& file, const Q
 	item->setFile(file);
 	item->setRow(row);
 	item->setColumn(column);
+	item->setFormat(mWarningFormat);
 	addItem(item);
 }
 
@@ -49,11 +50,19 @@ void IssueItem::setColumn(int col) {
 	mCol = col;
 }
 
-const QString&IssueItem::getExplanation() {
+void IssueList::setErrorFormat(const QTextCharFormat& fmt) {
+	mErrorFormat = fmt;
+}
+
+void IssueList::setWarningFormat(const QTextCharFormat& fmt) {
+	mWarningFormat = fmt;
+}
+
+const QString& IssueItem::getExplanation() {
 	return mExplanation;
 }
 
-const QString&IssueItem::getFile() {
+const QString& IssueItem::getFile() {
 	return mFile;
 }
 

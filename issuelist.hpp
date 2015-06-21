@@ -2,8 +2,9 @@
 #define ISSUELIST_HPP
 
 #include <QListWidget>
+#include "settingsmenu.hpp"
 
-class IssueItem : public QListWidgetItem {
+class IssueItem : public FormattedListItem {
 
 
 		QString mExplanation;
@@ -18,7 +19,7 @@ class IssueItem : public QListWidgetItem {
 		};
 
 		IssueItem(const QIcon& icon, const QString& txt, QListWidget* parent = 0) :
-			QListWidgetItem(icon, txt, parent),
+			FormattedListItem(icon, txt, parent),
 			mExplanation(""),
 			mFile(""),
 			mRow(0),
@@ -31,6 +32,8 @@ class IssueItem : public QListWidgetItem {
 		void setFile(const QString& filepath);
 		void setRow(int row);
 		void setColumn(int col);
+
+
 
 		const QString& getExplanation();
 		const QString& getFile();
@@ -45,8 +48,15 @@ class IssueList : public QListWidget {
 	friend class IssueItem;
 
 	QIcon mWarningIco, mErrorIco;
+
+
+	QTextCharFormat mErrorFormat;
+	QTextCharFormat mWarningFormat;
 	public:
 		IssueList(QWidget* parent = 0);
+
+		void setErrorFormat(const QTextCharFormat&);
+		void setWarningFormat(const QTextCharFormat&);
 
 		void addError(const QString&, const QString&, const QString&, int, int);
 		void addWarning(const QString&, const QString&, const QString&, int, int);
