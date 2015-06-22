@@ -18,8 +18,8 @@ TabWidget::TabWidget(QWidget *parent) :
 	setMovable(true);
 	setMouseTracking(true);
 	//this->tabBar()->installEventFilter();
-	connect(this, SIGNAL(tabCloseRequested(int)), this, SLOT(destroyTab(int)));
-	connect(this, SIGNAL(currentChanged(int)), this, SLOT(emitCurrentChanged(int)));
+	connect(this, &QTabWidget::tabCloseRequested, this, &TabWidget::destroyTab);
+	connect(this, &QTabWidget::currentChanged, this, &TabWidget::emitCurrentChanged);
 
 }
 
