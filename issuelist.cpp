@@ -8,7 +8,7 @@ IssueList::IssueList(QWidget* parent):
 }
 
 void IssueList::addError(const QString& wholeMsg, const QString& file, const QString& error, int row, int column) {
-	IssueItem* item = new IssueItem(mErrorIco, tr("ERROR! %1 in file '%2' at line %3").arg(error).arg(file).arg(row), this);
+	IssueItem* item = new IssueItem(mErrorIco, QStringLiteral("ERROR! %1 in file '%2' at line %3").arg(error).arg(file).arg(row), this);
 	item->setToolTip(wholeMsg);
 	item->setFile(file);
 	item->setRow(row);
@@ -18,7 +18,7 @@ void IssueList::addError(const QString& wholeMsg, const QString& file, const QSt
 }
 
 void IssueList::addWarning(const QString& wholeMsg, const QString& file, const QString& warning, int row, int column) {
-	IssueItem* item = new IssueItem(mWarningIco, tr("Warning! %1 in file '%2' at line %3").arg(warning).arg(file).arg(row), this);
+	IssueItem* item = new IssueItem(mWarningIco, QStringLiteral("Warning! %1 in file '%2' at line %3").arg(warning).arg(file).arg(row), this);
 	item->setToolTip(wholeMsg);
 	item->setFile(file);
 	item->setRow(row);
