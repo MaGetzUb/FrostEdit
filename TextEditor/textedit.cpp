@@ -130,9 +130,9 @@ TextEdit::TextEdit(QWidget *parent):
 
 
 
-	connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateDocumentLength(int)));
-	connect(this, SIGNAL(updateRequest(QRect, int)), this, SLOT(updateLineNumberArea(const QRect &, int)));
-	connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(highlightCurrentLine()));
+	connect(this, &TextEdit::blockCountChanged, this, &TextEdit::updateDocumentLength);
+	connect(this, &TextEdit::updateRequest, this, &TextEdit::updateLineNumberArea);
+	connect(this, &TextEdit::cursorPositionChanged, this, &TextEdit::highlightCurrentLine);
 	mCompleter = new QCompleter(this);
 	mCompleterModel = new QStandardItemModel(mCompleter);
 	mCompleter->setModel(mCompleterModel);
@@ -848,7 +848,7 @@ void TextEdit::initCompleter() {
 
 		}
 
-		connect(mCompleter, SIGNAL(activated(QString)), this, SLOT(insertCompletion(QString)));
+		connect(mCompleter, static_cast<void(QCompleter::*)(const QString&)>(&QCompleter::activated), this, &TextEdit::insertCompletion);
 
 	}
 
