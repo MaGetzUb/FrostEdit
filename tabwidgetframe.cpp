@@ -28,7 +28,7 @@ TabWidgetFrame::TabWidgetFrame(QWidget *parent) :
 	menu->addAction(ui->actionClose);
 	ui->splitButton->setMenu(menu);
 
-	connect(ui->comboBox, SIGNAL(currentTextChanged(QString)), this, SLOT(emitItemChanged(QString)));
+	connect(ui->comboBox, &ComboBox::currentTextChanged, this, &TabWidgetFrame::emitItemChanged);
 	resize(640, 480);
 }
 
