@@ -97,7 +97,7 @@ QFileInfo Document::saveTemporary() {
 		fileName = mFileInfo.absolutePath() + "-" + fileName;
 	else {
 		QString tmpFile = mFile;
-		tmpFile.replace('<', "[").replace('>', "]");
+		tmpFile.remove("<").remove(">");
 		fileName = cpath+"/"+tmpFile + "-" + fileName;
 	}
 	fileName.replace(" ", "_");
@@ -218,11 +218,13 @@ void Document::setCodeModel(CodeModel *codeModel) {
 
 	connect(this, &Document::contentsChange, codeModel, &CodeModel::documentEdited);
 
+
 	codeModel->parse();
 
 
 
 	mCodeModel = codeModel;
+	connect(this, &Document::contentsChanged, this, &Document::parse);
 }
 
 CodeModel *Document::getCodeModel() const {
