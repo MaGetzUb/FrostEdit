@@ -29,6 +29,7 @@ void SettingsMenu::on_okButton_clicked() {
 
 void SettingsMenu::on_applyButton_clicked() {
 	ui->appearance->updateSyntaxStyle();
+	ui->appearance->on_saveStyleSheet_clicked();
 	Settings::set("TextEditor/Font", ui->appearance->mFont.family());
 	Settings::set("TextEditor/FontSize", ui->appearance->mFont.pointSize());
 	Settings::sync();
