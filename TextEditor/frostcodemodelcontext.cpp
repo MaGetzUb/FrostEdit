@@ -65,6 +65,11 @@ CodeModelContext::CodeModelContext() {
 	mKeywords["include"] = Token::kInclude;
 }
 
+CodeModelContext::~CodeModelContext()
+{
+
+}
+
 QMap<QString, QSharedPointer<Symbol> > CodeModelContext::globalSymbols() const {
 	return mGlobalSymbols;
 }
