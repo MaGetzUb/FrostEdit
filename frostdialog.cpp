@@ -7,11 +7,13 @@ FrostDialog::FrostDialog(QWidget *parent) :
 	ui(new Ui::FrostDialog)
 {
 	ui->setupUi(this);
-	connect(this, SIGNAL(destroyed()), this, SLOT(emitClose()));
-	Qt::WindowFlags flags = windowFlags();
-	Qt::WindowFlags helpFlag = Qt::WindowContextHelpButtonHint;
-	flags = flags & (~helpFlag);
-	flags = flags | Qt::WindowFullscreenButtonHint | Qt::WindowMinimizeButtonHint;
+	connect(this, &FrostDialog::destroyed, this, &FrostDialog::emitClose);
+	Qt::WindowFlags flags = 0;
+	flags |= Qt::Window;
+	flags |= Qt::WindowCloseButtonHint;
+	flags |= Qt::WindowFullscreenButtonHint;
+	flags |= Qt::WindowMinimizeButtonHint;
+	flags |= Qt::WindowMaximizeButtonHint;
 	setWindowFlags(flags);
 
 }
