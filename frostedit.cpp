@@ -27,6 +27,8 @@
 
 QString FrostEdit::gAppName = "FrostEdit";
 
+
+
 FrostEdit::FrostEdit(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::FrostEdit),
@@ -43,7 +45,7 @@ FrostEdit::FrostEdit(QWidget *parent) :
 {
 
 	mDocumentWatcher = new QFileSystemWatcher(this);
-	connect(mDocumentWatcher, SIGNAL(fileChanged(QString)), this, SLOT(fileChangedOutside(QString)));
+	connect(mDocumentWatcher, &QFileSystemWatcher::fileChanged, this, &FrostEdit::fileChangedOutside);
 	ui->setupUi(this);
 
 
@@ -52,7 +54,7 @@ FrostEdit::FrostEdit(QWidget *parent) :
 	mCurrentTabWidget = mTabWidgetFrames.last()->tabWidget();
 	setCentralWidget(mTabWidgetFrames.last());
 
-	connect(ui->openFilesWidget, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(addEditor(QListWidgetItem*)));
+	connect(ui->openFilesWidget, &QListWidget::itemDoubleClicked, this, static_cast<void(FrostEdit::*)(QListWidgetItem*)>(&FrostEdit::addEditor));
 
 	for(TabWidgetFrame* tab: mTabWidgetFrames) {
 		connectTabWidgetFrameSignals(tab);
@@ -60,16 +62,16 @@ FrostEdit::FrostEdit(QWidget *parent) :
 
 
 
-	connect(this, SIGNAL(tabWidgetChanged(TabWidget*)), this, SLOT(setActiveTabWidget(TabWidget*)));
+	connect(this, &FrostEdit::tabWidgetChanged, this, &FrostEdit::setActiveTabWidget);
 	currentTabPageChanged(0);
-	connect(mCurrentTabWidget, SIGNAL(currentChanged(int)), this, SLOT(currentTabPageChanged(int)));
+	connect(mCurrentTabWidget, &QTabWidget::currentChanged, this, &FrostEdit::currentTabPageChanged);
 
-	connect(mFrostCompiler, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(compileFinished(int, QProcess::ExitStatus)));
+	connect(mFrostCompiler, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), this, &FrostEdit::compileFinished);
 
-	connect(mFindReplace, SIGNAL(findTriggered()), this, SLOT(findFromTextEdit()));
-	connect(mFindReplace, SIGNAL(findReplaceTriggered()), this, SLOT(findAndReplaceFromTextEdit()));
-	connect(mFindReplace, SIGNAL(replaceAllTriggered()), this, SLOT(replaceAllFromTextEdit()));
-	connect(mFindReplace, SIGNAL(settingsChanged(QString)), this, SLOT(pointOutOccurances(QString)));
+	connect(mFindReplace, &FindReplaceDialog::findTriggered, this, &FrostEdit::findFromTextEdit);
+	connect(mFindReplace, &FindReplaceDialog::findReplaceTriggered, this, &FrostEdit::findAndReplaceFromTextEdit);
+	connect(mFindReplace, &FindReplaceDialog::replaceAllTriggered, this, &FrostEdit::replaceAllFromTextEdit);
+	connect(mFindReplace, &FindReplaceDialog::settingsChanged, this, &FrostEdit::pointOutOccurances);
 
 	ui->browserWidget->setVisible(false);
 
@@ -100,19 +102,19 @@ FrostEdit::FrostEdit(QWidget *parent) :
 
 
 	mCompileOutput->hookToProcess(mFrostCompiler);
-	connect(mCompileOutput, SIGNAL(stdOutAdded(QString)), this, SLOT(interpretCompileOut(QString)));
+	connect(mCompileOutput, &Console::stdOutAdded, this, &FrostEdit::interpretCompileOut);
 
 	mApplicationOutput = new QTabWidget(ui->ConsoleArea);
 	mApplicationOutput->setTabsClosable(true);
 
-	connect(mApplicationOutput, SIGNAL(tabCloseRequested(int)), this, SLOT(applicationCloseRequest(int)));
+	connect(mApplicationOutput, &QTabWidget::tabCloseRequested, this, &FrostEdit::applicationCloseRequest);
 
 	mIssueList = new IssueList(ui->ConsoleArea);
 	ui->consoleTabs->addTab(mIssueList, "Issues");
 	ui->consoleTabs->addTab(mCompileOutput, "Console");
 	ui->consoleTabs->addTab(mApplicationOutput, "Application");
-	connect(mIssueList, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(pointToIssue(QListWidgetItem*)));
-	connect(mSettingsMenu, SIGNAL(settingsApplied()), this, SLOT(applySettings()));
+	connect(mIssueList, &IssueList::itemDoubleClicked, this, &FrostEdit::pointToIssue);
+	connect(mSettingsMenu, &SettingsMenu::settingsApplied, this, &FrostEdit::applySettings);
 
 
 	mCompileOutput->show();
@@ -285,7 +287,7 @@ void FrostEdit::removeDocument(Document* doc) {
 
 	mOpenDocuments.remove(doc->getFullPath());
 	mDocumentWatcher->removePath(doc->getFullPath());
-	disconnect(doc, SIGNAL(textChanged(Document*,bool)), this, SLOT(updateTabHeader(Document*, bool)));
+	disconnect(doc, &Document::textChanged, this, &FrostEdit::updateTabHeader);
 	delete doc;
 	doc = nullptr;
 }
@@ -464,7 +466,7 @@ Document* FrostEdit::addDocument(const QString& path, bool ghost) {
 	}
 
 	//Let's connect the textChanged signal to update tab header...
-	connect(doc, SIGNAL(textChanged(Document*,bool)), this, SLOT(updateTabHeader(Document*, bool)));
+	connect(doc, &Document::textChanged, this, &FrostEdit::updateTabHeader);
 
 	//We're done here.
 	return doc;
@@ -553,7 +555,7 @@ int FrostEdit::openEditors(Document* doc) {
 }
 
 void FrostEdit::on_actionNew_triggered() {
-	QString newfile = tr("New<%1>").arg(mNewCount);
+	QString newfile = QStringLiteral("<New %1>").arg(mNewCount);
 	Document* doc = new Document(this);
 
 	CodeModel* model = new Frost::FrostCodeModel(mFrostModelContext);
@@ -566,7 +568,7 @@ void FrostEdit::on_actionNew_triggered() {
 
 	setUpDocumentHiltter(doc);
 	addDocumentItem(doc);
-	connect(doc, SIGNAL(textChanged(Document*,bool)), this, SLOT(updateTabHeader(Document*, bool)));
+	connect(doc, &Document::textChanged, this, &FrostEdit::updateTabHeader);
 
 	for(TabWidgetFrame* tab: mTabWidgetFrames) {
 		tab->addComboBoxItem(newfile);
@@ -674,12 +676,12 @@ void FrostEdit::openToNewWindow(TabWidgetFrame* wid) {
 	dialog->setWindowTitle(gAppName);
 	mTabWidgetFrames.append(new TabWidgetFrame(dialog));
 
-	connect(mTabWidgetFrames.last()->tabWidget(), SIGNAL(currentChanged(TabWidget*, int)), this, SLOT(updateDocumentSelection(TabWidget*, int)));
-	connect(mTabWidgetFrames.last()->tabWidget(), SIGNAL(currentChanged(TabWidget*, int)), dialog, SLOT(changeTitle(TabWidget*, int)));
-	connect(mTabWidgetFrames.last()->tabWidget(), SIGNAL(tabCloseRequested(TabWidget*,int)), this, SLOT(closeTab(TabWidget*, int)));
-	connect(mTabWidgetFrames.last(), SIGNAL(close(TabWidgetFrame*)), this, SLOT(closeTabWidgetFrame(TabWidgetFrame*)));
-	connect(dialog, SIGNAL(closed(FrostDialog*)), this, SLOT(closeWindow(FrostDialog*)));
-	connect(mTabWidgetFrames.last(), SIGNAL(itemChanged(TabWidgetFrame*,QString)), this, SLOT(addEditor(TabWidgetFrame*,QString)));
+	connect(mTabWidgetFrames.last()->tabWidget(), &TabWidget::currentChanged, this, &FrostEdit::updateMicroFocus);
+	connect(mTabWidgetFrames.last()->tabWidget(), &TabWidget::currentChanged, dialog, &FrostDialog::changeTitle);
+	connect(mTabWidgetFrames.last()->tabWidget(), &TabWidget::tabCloseRequested, this, &FrostEdit::closeTab);
+	connect(mTabWidgetFrames.last(), &TabWidgetFrame::close, this, &FrostEdit::closeTabWidgetFrame);
+	connect(dialog, &FrostDialog::closed, this, &FrostEdit::closeWindow);
+	connect(mTabWidgetFrames.last(), &TabWidgetFrame::itemChanged, this, static_cast<void(FrostEdit::*)(TabWidgetFrame*, const QString&)>(&FrostEdit::addEditor));
 
 
 	dialog->layout()->setMargin(0);
@@ -1007,14 +1009,15 @@ TextEdit* FrostEdit::currentTextEdit() {
 
 
 void FrostEdit::connectTabWidgetFrameSignals(TabWidgetFrame* tab) {
-	connect(tab->tabWidget(), SIGNAL(currentChanged(TabWidget*, int)), this, SLOT(updateDocumentSelection(TabWidget*, int)));
-	connect(tab->tabWidget(), SIGNAL(currentChanged(TabWidget*, int)), this, SLOT(changeTitle(TabWidget*, int)));
-	connect(tab->tabWidget(), SIGNAL(tabCloseRequested(TabWidget*,int)), this, SLOT(closeTab(TabWidget*, int)));
-	connect(tab, SIGNAL(close(TabWidgetFrame*)), this, SLOT(closeTabWidgetFrame(TabWidgetFrame*)));
-	connect(tab, SIGNAL(splitHorizontally(TabWidgetFrame*)), this, SLOT(splitHorizontally(TabWidgetFrame*)));
-	connect(tab, SIGNAL(splitVertically(TabWidgetFrame*)), this, SLOT(splitVertically(TabWidgetFrame*)));
-	connect(tab, SIGNAL(openToNewWindow(TabWidgetFrame*)), this, SLOT(openToNewWindow(TabWidgetFrame*)));
-	connect(tab, SIGNAL(itemChanged(TabWidgetFrame*,QString)), this, SLOT(addEditor(TabWidgetFrame*,QString)));
+	connect(tab->tabWidget(), &TabWidget::currentChanged, this, &FrostEdit::updateMicroFocus);
+	connect(tab->tabWidget(), &TabWidget::currentChanged, this, &FrostEdit::changeTitle);
+	connect(tab->tabWidget(), &TabWidget::tabCloseRequested, this, &FrostEdit::closeTab);
+	connect(tab, &TabWidgetFrame::close, this, &FrostEdit::closeTabWidgetFrame);
+	connect(tab, &TabWidgetFrame::splitHorizontally, this, &FrostEdit::splitHorizontally);
+	connect(tab, &TabWidgetFrame::splitVertically, this, &FrostEdit::splitVertically);
+	connect(tab, &TabWidgetFrame::openToNewWindow, this, &FrostEdit::openToNewWindow);
+	connect(tab, &TabWidgetFrame::itemChanged, this, static_cast<void(FrostEdit::*)(TabWidgetFrame*, const QString&)>(&FrostEdit::addEditor));
+
 }
 
 void FrostEdit::closeEvent(QCloseEvent* e) {
