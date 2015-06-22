@@ -29,12 +29,16 @@
 #include "TextEditor/qate/mimedatabase.h"
 #include "TextEditor/qate/highlightdefinitionmanager.h"
 
-
+#include "TextEditor/frostcodemodelcontext.hpp"
+#include "TextEditor/frostcodemodel.hpp"
 
 
 namespace Ui {
 	class FrostEdit;
 }
+
+
+
 
 class FrostDialog;
 class QProcess;
@@ -75,15 +79,17 @@ class FrostEdit : public QMainWindow {
 		QString mCompiledFile;
 
 		Colorscheme mSyntaxStyle;
+
+		QSharedPointer<Frost::CodeModelContext> mFrostModelContext;
 	public:
 		static QString gAppName;
 		explicit FrostEdit(QWidget *parent = 0);
 		~FrostEdit();
 		void dropEvent(QDropEvent *);
 		void dragEnterEvent(QDragEnterEvent *);
-                void disableActions();
+		void disableActions();
 
-                void enableActions();
+		void enableActions();
 
 	public slots:
 		void fileChangedOutside(QString);

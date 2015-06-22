@@ -17,6 +17,7 @@
 #include <QFile>
 #include <QResource>
 
+
 #include "TextEditor/textedit.hpp"
 #include "frostdialog.hpp"
 #include "issuelist.hpp"
@@ -37,7 +38,8 @@ FrostEdit::FrostEdit(QWidget *parent) :
 	mHiltDefManager(Qate::HighlightDefinitionManager::instance()),
 	mFrostCompilerErrorRegEx("\\\"(.*)\\\"\\s+\\[\\s*(\\d+)\\,\\s*(\\d*)\\s*\\]\\s+(Warning|Error)\\s+(\\d+)\\:\\s+(.*)"),
 	mFindReplace(new FindReplaceDialog(this)),
-	mSettingsMenu(new SettingsMenu(this))
+	mSettingsMenu(new SettingsMenu(this)),
+	mFrostModelContext(new Frost::CodeModelContext())
 {
 
 	mDocumentWatcher = new QFileSystemWatcher(this);
@@ -341,25 +343,9 @@ void FrostEdit::setActiveTabWidget(TabWidget* wid) {
 		changeTitle(wid, wid->currentIndex());
 
 	if(e == nullptr) {
-		ui->actionCopy->setDisabled(true);
-		ui->actionCut->setDisabled(true);
-		ui->actionPaste->setDisabled(true);
-		ui->actionUndo->setDisabled(true);
-		ui->actionRedo->setDisabled(true);
-		ui->actionCompile->setDisabled(true);
-		ui->actionCompileAndRun->setDisabled(true);
-		ui->actionSave->setDisabled(true);
-		ui->actionSave_As->setDisabled(true);
+		disableActions();
 	} else {
-		ui->actionCopy->setEnabled(true);
-		ui->actionCut->setEnabled(true);
-		ui->actionPaste->setEnabled(true);
-		ui->actionUndo->setEnabled(true);
-		ui->actionRedo->setEnabled(true);
-		ui->actionCompile->setEnabled(true);
-		ui->actionCompileAndRun->setEnabled(true);
-		ui->actionSave->setEnabled(true);
-		ui->actionSave_As->setEnabled(true);
+		enableActions();
 	}
 
 }
@@ -395,6 +381,9 @@ void FrostEdit::disableActions() {
 	ui->actionSave->setDisabled(true);
 	ui->actionSave_As->setDisabled(true);
 	ui->actionCopy->setDisabled(true);
+	ui->actionFind->setDisabled(true);
+	ui->compile->setDisabled(true);
+	ui->compile_build->setDisabled(true);
 }
 
 void FrostEdit::enableActions() {
@@ -407,6 +396,9 @@ void FrostEdit::enableActions() {
 	ui->actionCompileAndRun->setEnabled(true);
 	ui->actionSave->setEnabled(true);
 	ui->actionSave_As->setEnabled(true);
+	ui->actionFind->setEnabled(true);
+	ui->compile->setEnabled(true);
+	ui->compile_build->setEnabled(true);
 }
 
 void FrostEdit::currentTabPageChanged(int id) {
@@ -425,13 +417,8 @@ void FrostEdit::currentTabPageChanged(int id) {
 	//if there's no editor, let's disable some buttons.
 	if(e == nullptr) {
 		disableActions();
-		ui->actionFind->setDisabled(true);
-		ui->compile->setDisabled(true);
-		ui->compile_build->setDisabled(true);
 	} else { //there was editor, enable them
 		enableActions();
-		ui->compile->setEnabled(true);
-		ui->compile_build->setEnabled(true);
 	}
 }
 
@@ -461,7 +448,9 @@ Document* FrostEdit::addDocument(const QString& path, bool ghost) {
 	mOpenDocuments.insert(path, doc);
 	//Setting up a highlighter for it..
 	setUpDocumentHiltter(doc);
-
+	//Set up a frostcodemodel
+	CodeModel* model = new Frost::FrostCodeModel(mFrostModelContext);
+	doc->setCodeModel(model);
 	//If file isn't ghost we'll ad it into a open documents list
 	if(ghost == false)
 		addDocumentItem(doc);
@@ -566,6 +555,10 @@ int FrostEdit::openEditors(Document* doc) {
 void FrostEdit::on_actionNew_triggered() {
 	QString newfile = tr("New<%1>").arg(mNewCount);
 	Document* doc = new Document(this);
+
+	CodeModel* model = new Frost::FrostCodeModel(mFrostModelContext);
+	doc->setCodeModel(model);
+
 	mOpenDocuments[newfile] = doc;
 	mOpenDocuments[newfile]->setFile(newfile);
 	mNewCount++;
