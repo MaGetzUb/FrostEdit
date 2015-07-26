@@ -6,12 +6,11 @@
 #include <QDomNode>
 #include <QFileInfo>
 #include <QBrush>
+#include <QString>
 
-void Colorscheme::addIdKey(int fmt, const QString& key)
-{
+void Colorscheme::addIdKey(int fmt, const QString& key) {
 	mIDByKey[key] = fmt;
 	mKeyByID[fmt] = key;
-	qDebug() << "ID: " << fmt << "Added with key: " << key;
 }
 
 Colorscheme::Colorscheme():
@@ -157,19 +156,33 @@ void Colorscheme::applyToHighlighter(TextEditor::Internal::Highlighter* hiltter)
 }
 
 void Colorscheme::applyToTextEdit(TextEdit* edit) {
-	QPalette palette = edit->palette();
-	palette.setBrush(QPalette::Active, QPalette::Background, mFormats[BasicText].background());
-	palette.setBrush(QPalette::Inactive, QPalette::Background, mFormats[BasicText].background());
-	palette.setBrush(QPalette::Active, QPalette::Foreground, mFormats[BasicText].foreground());
-	palette.setBrush(QPalette::Inactive, QPalette::Foreground, mFormats[BasicText].foreground());
-	palette.setBrush(QPalette::Active, QPalette::Base, mFormats[BasicText].background());
-	palette.setBrush(QPalette::Inactive, QPalette::Base, mFormats[BasicText].background());
-	palette.setBrush(QPalette::Active, QPalette::Text, mFormats[BasicText].foreground());
-	palette.setBrush(QPalette::Inactive, QPalette::Text, mFormats[BasicText].foreground());
+	edit->setStyleSheet("");
 
+	QPalette palette = edit->palette();
+	//palette.setBrush(QPalette::Active, QPalette::Background, mFormats[BasicText].background());
+	//palette.setBrush(QPalette::Inactive, QPalette::Background, mFormats[BasicText].background());
+	//palette.setBrush(QPalette::Active, QPalette::Foreground, mFormats[BasicText].foreground());
+	//palette.setBrush(QPalette::Inactive, QPalette::Foreground, mFormats[BasicText].foreground());
+	//palette.setBrush(QPalette::Active, QPalette::Base, mFormats[BasicText].background());
+	//palette.setBrush(QPalette::Inactive, QPalette::Base, mFormats[BasicText].background());
+	//palette.setBrush(QPalette::Active, QPalette::Text, mFormats[BasicText].foreground());
+	//palette.setBrush(QPalette::Inactive, QPalette::Text, mFormats[BasicText].foreground());
 	palette.setBrush(QPalette::Highlight, mFormats[Selection].background());
 	palette.setBrush(QPalette::HighlightedText, mFormats[Selection].foreground());
 	edit->setPalette(palette);
+
+	QString qss = \
+	QString("\
+		TextEdit {\
+			color: %1; \
+			background-color: %2; \
+		} \
+	") \
+	.arg(mFormats[BasicText].foreground().color().name()) \
+	.arg(mFormats[BasicText].background().color().name());
+
+
+	edit->setStyleSheet(qss);
 
 	edit->setLineNumberFormat(mFormats[LineNumber]);
 	edit->setSimilarOccuranceFormat(mFormats[SimilarOccurance]);
@@ -186,10 +199,18 @@ void Colorscheme::applyToConsole(Console* console) {
 
 	QTextCharFormat bg = mFormats[ConsoleText].background().isOpaque() ? mFormats[BasicText] :  mFormats[ConsoleText];
 	QTextCharFormat fg = mFormats[ConsoleText].foreground().isOpaque() ? mFormats[BasicText] :  mFormats[ConsoleText];
-	palette.setBrush(QPalette::Active, QPalette::Base, bg.background());
-	palette.setBrush(QPalette::Inactive, QPalette::Base, bg.background());
-	palette.setBrush(QPalette::Active, QPalette::Text, fg.foreground());
-	palette.setBrush(QPalette::Inactive, QPalette::Text, fg.foreground());
+
+	QString qss = \
+	QString("\
+		Console {\
+			color: %1; \
+			background-color: %2; \
+		} \
+	") \
+	.arg(fg.foreground().color().name()) \
+	.arg(bg.background().color().name());
+	console->setStyleSheet(qss);
+
 	palette.setBrush(QPalette::Highlight, mFormats[Selection].background());
 	palette.setBrush(QPalette::HighlightedText, mFormats[Selection].foreground());
 	console->setPalette(palette);
@@ -198,12 +219,17 @@ void Colorscheme::applyToConsole(Console* console) {
 }
 
 void Colorscheme::applyToIssueList(IssueList* list) {
-	QPalette palette = list->palette();
-	palette.setBrush(QPalette::Active, QPalette::Base, mFormats[BasicText].background());
-	palette.setBrush(QPalette::Inactive, QPalette::Base, mFormats[BasicText].background());
-	palette.setBrush(QPalette::Active, QPalette::Text, mFormats[BasicText].foreground());
-	palette.setBrush(QPalette::Inactive, QPalette::Text, mFormats[BasicText].foreground());
-	list->setPalette(palette);
+
+	QString qss = \
+	QString("\
+		IssueList {\
+			color: %1; \
+			background-color: %2; \
+		} \
+	") \
+	.arg(mFormats[BasicText].foreground().color().name()) \
+	.arg(mFormats[BasicText].background().color().name());
+	list->setStyleSheet(qss);
 	list->setErrorFormat(mFormats[IssueError]);
 	list->setWarningFormat(mFormats[IssueWarning]);
 }

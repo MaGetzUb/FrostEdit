@@ -45,7 +45,7 @@ class Console : public QPlainTextEdit {
 		void disconnectSignalsAfterFinishing(bool);
 		void insertStandardOut(const QString& str);
 		void insertErrorOut(const QString& str);
-		void mouseDoubleClickEvent(QMouseEvent* e);
+		void mouseDoubleClickEvent(QMouseEvent* e) override;
 	private slots:
 		void readAll();
 		void readAllStandardOut();

@@ -9,21 +9,23 @@
 #include <QUrl>
 #include <QMessageBox>
 #include <QListWidgetItem>
-#include <QTreeWidgetItem>
 #include <QDebug>
 #include <QDialog>
 #include <QString>
 #include <QProcess>
 #include <QFile>
 #include <QResource>
-
+#include <QDirModel>
 
 #include "TextEditor/textedit.hpp"
 #include "frostdialog.hpp"
 #include "issuelist.hpp"
+#include "documentitem.hpp"
+#include "combotabwidget.hpp"
 
 #include "TextEditor/qate/defaultcolors.h"
 #include "TextEditor/fatehighlighter.hpp"
+#include "filelistwidget.hpp"
 
 QString FrostEdit::gAppName = "FrostEdit";
 
@@ -41,7 +43,14 @@ FrostEdit::FrostEdit(QWidget *parent) :
 	mFrostCompilerErrorRegEx("\\\"(.*)\\\"\\s+\\[\\s*(\\d+)\\,\\s*(\\d*)\\s*\\]\\s+(Warning|Error)\\s+(\\d+)\\:\\s+(.*)"),
 	mFindReplace(new FindReplaceDialog(this)),
 	mSettingsMenu(new SettingsMenu(this)),
-	mFrostModelContext(new Frost::CodeModelContext())
+	mFrostModelContext(new Frost::CodeModelContext()),
+	mComboTabWidget(nullptr),
+	mCompileOutput(nullptr),
+	mApplicationOutput(nullptr),
+	mOpenDocumentsList(nullptr),
+	mProjectsTreeWidget(nullptr),
+	mFileSystemTreeView(nullptr),
+	mFileSystemModel(nullptr)
 {
 
 	mDocumentWatcher = new QFileSystemWatcher(this);
@@ -54,7 +63,6 @@ FrostEdit::FrostEdit(QWidget *parent) :
 	mCurrentTabWidget = mTabWidgetFrames.last()->tabWidget();
 	setCentralWidget(mTabWidgetFrames.last());
 
-	connect(ui->openFilesWidget, &QListWidget::itemDoubleClicked, this, static_cast<void(FrostEdit::*)(QListWidgetItem*)>(&FrostEdit::addEditor));
 
 	for(TabWidgetFrame* tab: mTabWidgetFrames) {
 		connectTabWidgetFrameSignals(tab);
@@ -102,7 +110,7 @@ FrostEdit::FrostEdit(QWidget *parent) :
 
 
 	mCompileOutput->hookToProcess(mFrostCompiler);
-	connect(mCompileOutput, &Console::stdOutAdded, this, &FrostEdit::interpretCompileOut);
+	connect(mCompileOutput, &Console::stdOutAdded, this, &FrostEdit::parseCompileOut);
 
 	mApplicationOutput = new QTabWidget(ui->ConsoleArea);
 	mApplicationOutput->setTabsClosable(true);
@@ -115,10 +123,31 @@ FrostEdit::FrostEdit(QWidget *parent) :
 	ui->consoleTabs->addTab(mApplicationOutput, "Application");
 	connect(mIssueList, &IssueList::itemDoubleClicked, this, &FrostEdit::pointToIssue);
 	connect(mSettingsMenu, &SettingsMenu::settingsApplied, this, &FrostEdit::applySettings);
-
-
 	mCompileOutput->show();
 	mIssueList->show();
+
+	/* Replacing openFiles widget's central widget with ComboTabWidget*/
+	mComboTabWidget = new ComboTabWidget(this);
+	mOpenDocumentsList = new FileListWidget(this);
+	mProjectsTreeWidget = new QTreeWidget(this);
+	mFileSystemTreeView = new QTreeView(this);
+
+
+	mFileSystemModel = new FileSystemModel(this);
+	mFileSystemTreeView->setModel(mFileSystemModel);
+	mFileSystemTreeView->setColumnHidden(1, true);
+	mFileSystemTreeView->setColumnHidden(2, true);
+	mFileSystemTreeView->setColumnHidden(3, true);
+	mFileSystemModel->setRootPath(QDir::currentPath());
+	mFileSystemTreeView->setCurrentIndex(mFileSystemModel->index(QDir::currentPath()));
+
+	ui->openFiles->setWidget(mComboTabWidget);
+	mComboTabWidget->addTab(mOpenDocumentsList, "Open Documents");
+	mComboTabWidget->addTab(mProjectsTreeWidget, "Project Manager");
+	mComboTabWidget->addTab(mFileSystemTreeView, "File system");
+
+	connect(mFileSystemTreeView, &QTreeView::doubleClicked, this, &FrostEdit::openDocument);
+	connect(mOpenDocumentsList, &QListWidget::itemDoubleClicked, this, static_cast<void(FrostEdit::*)(QListWidgetItem*)>(&FrostEdit::addEditor));
 
 	if(Settings::firstTime()) {
 		if(Settings::get("DefaultCompiler/Path").isNull()) {
@@ -132,6 +161,8 @@ FrostEdit::FrostEdit(QWidget *parent) :
 		Settings::set("TextEditor/Font", "Lucida Console");
 		Settings::set("TextEditor/FontSize", 10);
 
+		Settings::set("Editor/MaximizedWindow", (windowState() & Qt::WindowMaximized) == Qt::WindowMaximized);
+		Settings::set("Editor/WindowGeometry", geometry());
 		Settings::sync();
 	} else {
 		if(Settings::get("DefaultCompiler/Path").isNull()) {
@@ -146,9 +177,10 @@ FrostEdit::FrostEdit(QWidget *parent) :
 }
 
 FrostEdit::~FrostEdit() {
-	for(QMap<QString, Document*>::iterator i = mOpenDocuments.begin(); i != mOpenDocuments.end(); i++) {
-		delete mOpenDocuments[i.key()];
-		mDocumentWatcher->removePath(i.key());
+	for(auto& i: mOpenDocuments.keys()) {
+		delete mOpenDocuments[i];
+		mOpenDocuments.remove(i);
+		mDocumentWatcher->removePath(i);
 	}
 	mOpenDocuments.clear();
 
@@ -207,6 +239,9 @@ void FrostEdit::updateSettings() {
 	mSettingsMenu->appearanceTab()->setSyntaxStyle(&mSyntaxStyle);
 	mFont.setFamily(Settings::get("TextEditor/Font", "Lucida Console").toString());
 	mFont.setPointSize(Settings::get("TextEditor/FontSize", 10).toInt());
+
+	setWindowState(windowState() | Settings::get("Editor/MaximizedWindow").toBool() ? Qt::WindowMaximized : Qt::WindowNoState);
+	setGeometry(Settings::get("Editor/WindowGeometry").toRect());
 	mSettingsMenu->appearanceTab()->setTextEditFont(mFont);
 	Settings::instance().sync();
 }
@@ -288,8 +323,17 @@ void FrostEdit::removeDocument(Document* doc) {
 	mOpenDocuments.remove(doc->getFullPath());
 	mDocumentWatcher->removePath(doc->getFullPath());
 	disconnect(doc, &Document::textChanged, this, &FrostEdit::updateTabHeader);
+	disconnect(doc, &Document::exterminate, this, &FrostEdit::removeDocument);
 	delete doc;
 	doc = nullptr;
+}
+
+void FrostEdit::openDocument(const QModelIndex& ind) {
+	QString doc = mFileSystemModel->filePath(ind);
+	if(!mFileSystemModel->isDir(ind)){
+		addDocument(doc);
+		addEditor(doc);
+	}
 }
 
 
@@ -321,6 +365,9 @@ void FrostEdit::updateDocumentSelection(TabWidget* wid, int sel) {
 	Document* doc = toDocument(e->document());
 	TabWidgetFrame* parentWidget = toTabWidgetFrame(wid->parentWidget());
 	parentWidget->setCurrentItem(doc->getFullPath());
+	if(doc->isActualFile())
+		mFileSystemTreeView->setCurrentIndex(mFileSystemModel->index(doc->getFullPath()));
+
 	doc->getItem()->setSelected(true);
 
 }
@@ -403,6 +450,10 @@ void FrostEdit::enableActions() {
 	ui->compile_build->setEnabled(true);
 }
 
+bool FrostEdit::hasDocument(const QString& path) {
+	return mOpenDocuments.contains(path);
+}
+
 void FrostEdit::currentTabPageChanged(int id) {
 	if(id == -1) {
 		disableActions();
@@ -447,6 +498,8 @@ Document* FrostEdit::addDocument(const QString& path, bool ghost) {
 
 	//We make a new file..
 	Document* doc = new Document(this, loadPath);
+	connect(doc, &Document::exterminate, this, &FrostEdit::removeDocument);
+
 	mOpenDocuments.insert(path, doc);
 	//Setting up a highlighter for it..
 	setUpDocumentHiltter(doc);
@@ -473,9 +526,9 @@ Document* FrostEdit::addDocument(const QString& path, bool ghost) {
 }
 
 void FrostEdit::addDocumentItem(Document* doc) {
-	DocumentItem* item = new DocumentItem(ui->openFilesWidget, doc);
+	DocumentItem* item = new DocumentItem(mOpenDocumentsList, doc);
 	item->setIcon(mFileIconProvider.icon(doc->getFileInfo()));
-	ui->openFilesWidget->addItem(item);
+	mOpenDocumentsList->addItem(item);
 	doc->setItem(item);
 }
 
@@ -501,9 +554,9 @@ void FrostEdit::on_actionSave_As_triggered() {
 
 
 void FrostEdit::on_closeDocument_clicked() {
-	if(ui->openFilesWidget->currentItem() == nullptr)
+	if(mOpenDocumentsList->currentItem() == nullptr)
 		return;
-	DocumentItem* item = static_cast<DocumentItem*>(ui->openFilesWidget->currentItem());
+	DocumentItem* item = static_cast<DocumentItem*>(mOpenDocumentsList->currentItem());
 	Document* doc = item->getDocument();
 
 	int ans = documentSafeClose(doc);
@@ -558,6 +611,7 @@ void FrostEdit::on_actionNew_triggered() {
 	QString newfile = QStringLiteral("<New %1>").arg(mNewCount);
 	Document* doc = new Document(this);
 
+
 	CodeModel* model = new Frost::FrostCodeModel(mFrostModelContext);
 	doc->setCodeModel(model);
 
@@ -569,6 +623,7 @@ void FrostEdit::on_actionNew_triggered() {
 	setUpDocumentHiltter(doc);
 	addDocumentItem(doc);
 	connect(doc, &Document::textChanged, this, &FrostEdit::updateTabHeader);
+	connect(doc, &Document::exterminate, this, &FrostEdit::removeDocument);
 
 	for(TabWidgetFrame* tab: mTabWidgetFrames) {
 		tab->addComboBoxItem(newfile);
@@ -740,6 +795,7 @@ Document* FrostEdit::getActiveDocument() {
 	return toDocument(edit->document());
 }
 
+
 void FrostEdit::on_actionCompileAndRun_triggered() {
 	compile();
 	mRunToo = true;
@@ -767,13 +823,19 @@ void FrostEdit::pointToIssue(QListWidgetItem* item) {
 	TextEdit* edit = nullptr;
 
 	QString path;
+	QString open;
 	QFileInfo file(mCompiledFile);
 	if(file.exists()  && file.isFile()) {
 		path = file.absolutePath();
+		QFileInfo finfo(path+"/"+issue->getFile());
+		if(finfo.isFile())
+			open = finfo.absolutePath();
+		else
+			open = issue->getFile();
 	} else {
-		path = QDir::currentPath();
+		open = mCompiledFile;
 	}
-	QString open = path+"/"+issue->getFile();
+
 
 	addEditor(curTabFrameWidget, open);
 
@@ -786,7 +848,7 @@ void FrostEdit::pointToIssue(QListWidgetItem* item) {
 
 }
 
-void FrostEdit::interpretCompileOut(QString line) {
+void FrostEdit::parseCompileOut(QString line) {
 
 	auto match = mFrostCompilerErrorRegEx.match(line);
 	while(match.hasMatch()) {
@@ -801,6 +863,12 @@ void FrostEdit::interpretCompileOut(QString line) {
 		QString type = captures[4];
 		int code = captures[5].toInt();
 		QString explanation = captures[6];
+		QString prevfile = file;
+
+		if(file != mCompiledFile && file.right(4) == ".tmp") {
+			file = mCompiledFile;
+			wholeMsg.replace(prevfile, file);
+		}
 
 		if(type.toLower() == "warning")
 			mIssueList->addWarning(wholeMsg, file, explanation, row, col);
@@ -815,7 +883,7 @@ void FrostEdit::setUpDocumentHiltter(Document* doc) {
 	TextEditor::Internal::Highlighter* hilt = new Fate::FateHighlighter();
 	//Qate::DefaultColors::ApplyToHighlighter(hilt);
 	mSyntaxStyle.applyToHighlighter(hilt);
-	QSharedPointer<TextEditor::Internal::HighlightDefinition> ptr = mHiltDefManager->definition("Highlighters/frostbasic.xml");
+	auto ptr = mHiltDefManager->definition("Highlighters/frostbasic.xml");
 	if(!ptr.isNull())
 		hilt->setDefaultContext(ptr->initialContext());
 	else
@@ -1034,6 +1102,13 @@ void FrostEdit::closeEvent(QCloseEvent* e) {
 		}
 	}
 	mFindReplace->setHidden(true);
+
+
+	Settings::set("Editor/MaximizedWindow", (windowState() & Qt::WindowMaximized) == Qt::WindowMaximized);
+	if(!((windowState() & Qt::WindowMaximized) == Qt::WindowMaximized))
+		Settings::set("Editor/WindowGeometry",  geometry());
+	Settings::sync();
+
 	e->accept();
 }
 

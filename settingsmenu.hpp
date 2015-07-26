@@ -19,7 +19,7 @@ class SettingsMenu : public QDialog {
 
 		AppearanceTab* appearanceTab();
 
-		void closeEvent(QCloseEvent *);
+		void closeEvent(QCloseEvent *) override;
 	signals:
 		void settingsApplied();
 

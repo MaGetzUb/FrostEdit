@@ -55,10 +55,10 @@ bool FindReplaceDialog::isWalkAround() {
 }
 
 QTextDocument::FindFlags FindReplaceDialog::findFlags() {
-	QTextDocument::FindFlags flags = (QTextDocument::FindFlag)0x0;
-	flags |= (!isDownwardsSearch()) ? QTextDocument::FindBackward : QFlag(0x0);
-	flags |= (isWholeWordsOnly()) ? QTextDocument::FindWholeWords : QFlag(0x0);
-	flags |= (isCaseSensitive()) ? QTextDocument::FindCaseSensitively : QFlag(0x0);
+	QTextDocument::FindFlags flags = QTextDocument::FindFlag(0x0);
+	flags |= (!isDownwardsSearch()) ? QTextDocument::FindBackward : QTextDocument::FindFlag(0x0);
+	flags |= (isWholeWordsOnly()) ? QTextDocument::FindWholeWords : QTextDocument::FindFlag(0x0);
+	flags |= (isCaseSensitive()) ? QTextDocument::FindCaseSensitively : QTextDocument::FindFlag(0x0);
 	return flags;
 }
 

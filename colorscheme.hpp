@@ -55,15 +55,9 @@ class Colorscheme {
 
 
 	QTextCharFormat mFormats[Formats];
-
 	QString mFile, mName;
 	QDomDocument mXMLDoc;
 
-	enum SchemeGroup {
-		CodeColors,
-		ConsoleColors,
-		IssueListColors
-	};
 
 	void addIdKey(int fmt, const QString& key);
 	public:

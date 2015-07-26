@@ -28,6 +28,7 @@ class Document : public QTextDocument {
 	DocumentItem* mItem;
 	CodeModel* mCodeModel;
 
+
 	public:
 
 
@@ -54,11 +55,11 @@ class Document : public QTextDocument {
 		TextEditor::Internal::Highlighter* getHighlighter() const;
 
 
+
 		void setCodeModel(CodeModel *codeModel);
 		CodeModel *getCodeModel() const;
 
 		FrostEdit* getEditor() const;
-
 
 	public slots:
 
@@ -68,15 +69,16 @@ class Document : public QTextDocument {
 		QFileInfo saveTemporary();
 		void lexicalAnalyze();
 		void parse();
+		void close();
 
 	private slots:
 		void emitTextChanged(bool b);
-
 
 	signals:
 		void pathChanged(QString);
 		void textChanged(Document*, bool b);
 		void highlighterChanged(Document*, TextEditor::Internal::Highlighter*);
+		void exterminate(Document*);
 };
 
 #endif // DOCUMENT_HPP

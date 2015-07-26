@@ -16,7 +16,7 @@ class LineNumberArea : public QWidget {
 			QWidget(editor),
 			mTextEdit(editor),
 			mBookMarkAction(new QAction("Toggle bookmark", this)),
-			mBreakPointAction(new QAction("Toggle breakpoint", this)){
+			mBreakPointAction(new QAction("Toggle breakpoint", this)) {
 			mBookMarkAction->setCheckable(true);
 			mBreakPointAction->setCheckable(true);
 			setMouseTracking(true);

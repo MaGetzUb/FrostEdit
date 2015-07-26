@@ -131,6 +131,7 @@ void Document::emitTextChanged(bool b) {
 	emit textChanged(this, b);
 }
 
+
 const QFileInfo& Document::getFileInfo() const {
 	return mFileInfo;
 }
@@ -171,13 +172,12 @@ void Document::setItem(DocumentItem* item) {
 	mItem = item;
 }
 
-DocumentItem*Document::getItem() const {
+DocumentItem* Document::getItem() const {
 	return mItem;
 }
 
-
 bool Document::isActualFile() const {
-	return mFileInfo.isFile();
+	return QFile::exists(mFile);
 }
 
 void Document::setFile(const QString& file) {
@@ -207,6 +207,10 @@ const TextEditor::TabSettings& Document::getTabSettings() const {
 
 TextEditor::Internal::Highlighter* Document::getHighlighter() const {
 	return mHighlighter;
+}
+
+void Document::close() {
+	emit exterminate(this);
 }
 
 void Document::setCodeModel(CodeModel *codeModel) {

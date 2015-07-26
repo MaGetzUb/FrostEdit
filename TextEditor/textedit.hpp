@@ -101,7 +101,7 @@ class TextEdit : public QPlainTextEdit {
 		~TextEdit();
 		void setFindReplaceInstance(FindReplaceDialog* instance);
 
-		void initCompleter();
+
 		void setTabSettings(const TextEditor::TabSettings& settings);
 
 		void lineNumberAreaPaintEvent(QPaintEvent*);
@@ -150,7 +150,7 @@ class TextEdit : public QPlainTextEdit {
 		void updateHeight();
 	private:
 
-
+		void initCompleter();
 		QPair<int, int> searchCounterBracket(int pos);
 
 		void drawIndentationPipes(QPainter&, QTextBlock&, int top, int bottom, int space, const QTextCharFormat&);

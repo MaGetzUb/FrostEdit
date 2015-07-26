@@ -15,14 +15,14 @@ class TabWidget : public QTabWidget {
 		explicit TabWidget(QWidget *parent = 0);
 		~TabWidget();
 
-		void dropEvent(QDropEvent*);
-		void dragEnterEvent(QDragEnterEvent*);
-		void dragLeaveEvent(QDragLeaveEvent*);
-		void mousePressEvent(QMouseEvent *);
-		void mouseReleaseEvent(QMouseEvent *);
+		void dropEvent(QDropEvent*) override;
+		void dragEnterEvent(QDragEnterEvent*) override;
+		void dragLeaveEvent(QDragLeaveEvent*) override;
+		void mousePressEvent(QMouseEvent *) override;
+		void mouseReleaseEvent(QMouseEvent *) override;
 
 		void setActive(bool b);
-		void paintEvent(QPaintEvent*);
+		void paintEvent(QPaintEvent*) override;
 
 	public slots:
 		void destroyTab(int);

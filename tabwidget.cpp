@@ -6,12 +6,15 @@
 #include <QDialog>
 #include "TextEditor/textedit.hpp"
 #include <QPainter>
+#include <QTextDocument>
+
 
 TabWidget::TabWidget(QWidget *parent) :
 	QTabWidget(parent),
 	ui(new Ui::TabWidget),
 	isActive(false)
 {
+
 	ui->setupUi(this);
 	acceptDrops();
 	setTabsClosable(true);
@@ -58,6 +61,20 @@ void TabWidget::paintEvent(QPaintEvent* e) {
 	if(isActive) {
 		p.fillRect(e->rect(), QColor(32, 128, 255, 96));
 	}
+
+	float width = e->rect().size().width()/2;
+	QTextDocument doc;
+
+	doc.documentLayout()->setPaintDevice(p.device());
+	doc.setHtml("<center><font size='10'><b><u>Open a document<u></b></font></center><font size='6'><ul><li>File menu > Open (Ctrl + O)</li><li>Drag and drop files here</li><li>If any, selecting file from the open documents list</li><li>Selecting file from the drop box in the header.</li></ul></font>");
+	//doc.setTextWidth(width/2);
+	p.setPen(palette().foreground().color());
+
+	QRectF rct = e->rect();
+	rct.setWidth(width);
+	p.translate(rct.size().width()/2, rct.size().height()/2);
+	doc.drawContents(&p, rct);
+
 }
 
 void TabWidget::destroyTab(int id) {

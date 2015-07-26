@@ -7,11 +7,14 @@
 #include <QFileSystemWatcher>
 #include <QMap>
 #include <QFont>
+#include <QTreeWidget>
 #include <QListWidgetItem>
+#include <QListWidget>
 #include <QSplitter>
 #include <QProcess>
 #include <QSettings>
 #include <QFileIconProvider>
+#include <QTreeView>
 
 #include "settings.hpp"
 #include "TextEditor/document.hpp"
@@ -20,8 +23,8 @@
 #include "tabwidgetframe.hpp"
 #include "console.hpp"
 #include "tabwidget.hpp"
-#include "documentitem.hpp"
 #include "colorscheme.hpp"
+#include "filesystemmodel.hpp"
 
 #include "TextEditor/qate/highlighter.h"
 #include "TextEditor/qate/highlightdefinition.h"
@@ -38,8 +41,8 @@ namespace Ui {
 }
 
 
-
-
+class FileListWidget;
+class ComboTabWidget;
 class FrostDialog;
 class QProcess;
 class TextEdit;
@@ -47,7 +50,7 @@ class IssueList;
 class FrostEdit : public QMainWindow {
 		Q_OBJECT
 		QFileSystemWatcher* mDocumentWatcher;
-		QMap<QString, Document*> mOpenDocuments;
+		QHash<QString, Document*> mOpenDocuments;
 		QVector<QFileInfo> mTemporaryFiles;
 
 		TabWidget* mCurrentTabWidget;
@@ -63,6 +66,8 @@ class FrostEdit : public QMainWindow {
 
 		FindReplaceDialog* mFindReplace;
 		SettingsMenu* mSettingsMenu;
+		ComboTabWidget* mComboTabWidget;
+
 
 		QFileInfo mCompileFile;
 
@@ -78,6 +83,13 @@ class FrostEdit : public QMainWindow {
 		int mNewCount;
 		QString mCompiledFile;
 
+		FileSystemModel* mFileSystemModel;
+
+
+		FileListWidget* mOpenDocumentsList;
+		QTreeWidget* mProjectsTreeWidget;
+		QTreeView* mFileSystemTreeView;
+
 		Colorscheme mSyntaxStyle;
 
 		QSharedPointer<Frost::CodeModelContext> mFrostModelContext;
@@ -90,20 +102,25 @@ class FrostEdit : public QMainWindow {
 		void disableActions();
 
 		void enableActions();
+		bool hasDocument(const QString&);
+
+
 
 	public slots:
 		void fileChangedOutside(QString);
 		void updateTabHeader(Document*, bool);
+		void removeDocument(Document*);
 	private slots:
 
 
 		void updateSettings();
 
 		void addEditor(QListWidgetItem*);
+		void openDocument(const QModelIndex&);
+		//void addEditor(const QModelIndex&);
 		void addEditor(const QString&);
 		void addEditor(TabWidgetFrame*, const QString&);
 
-		void removeDocument(Document*);
 		void addDocumentItem(Document* doc);
 		void updateDocumentSelection(TabWidget*, int);
 		void changeTitle(TabWidget*, int);
@@ -151,7 +168,7 @@ class FrostEdit : public QMainWindow {
 		void applicationCloseRequest(int );
 
 		void pointToIssue(QListWidgetItem*);
-		void interpretCompileOut(QString);
+		void parseCompileOut(QString);
 
 		void on_actionRun_triggered();
 
@@ -179,22 +196,24 @@ class FrostEdit : public QMainWindow {
 		TextEdit* currentTextEdit();
 
 		void connectTabWidgetFrameSignals(TabWidgetFrame*);
-		void closeEvent(QCloseEvent *);
+		void closeEvent(QCloseEvent *) override;
 		void setUpDocumentHiltter(Document*);
 		int tabWidgetContains(TabWidget*, Document*);
 		Document* addDocument(const QString&, bool ghost = false);
-
-		TextEdit* toTextEdit(QWidget*);
-		Document* toDocument(QTextDocument*);
-		TabWidgetFrame* toTabWidgetFrame(QWidget*);
-		FrostDialog* toFrostDialog(QWidget*);
-		Console* toConsole(QWidget*);
 
 		void updateTabWidget(TabWidget* tabwid);
 
 		Document* getActiveDocument();
 		Ui::FrostEdit *ui;
 		bool mRunToo;
+
+	public:
+
+		static TextEdit* toTextEdit(QWidget*);
+		static Document* toDocument(QTextDocument*);
+		static TabWidgetFrame* toTabWidgetFrame(QWidget*);
+		static FrostDialog* toFrostDialog(QWidget*);
+		static Console* toConsole(QWidget*);
 };
 
 #endif // FROSTEDITOR_HPP

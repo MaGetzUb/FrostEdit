@@ -14,8 +14,20 @@
    <string>FrostEdit</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="icons.qrc">
-    <normaloff>:/icons/Icons/frostedit.ico</normaloff>:/icons/Icons/frostedit.ico</iconset>
+   <iconset resource="resources.qrc">
+    <normaloff>:/Icons/frostedit.ico</normaloff>:/Icons/frostedit.ico</iconset>
+  </property>
+  <property name="animated">
+   <bool>true</bool>
+  </property>
+  <property name="documentMode">
+   <bool>false</bool>
+  </property>
+  <property name="dockNestingEnabled">
+   <bool>true</bool>
+  </property>
+  <property name="unifiedTitleAndToolBarOnMac">
+   <bool>true</bool>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout_2">
@@ -129,7 +141,7 @@
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="openFiles">
    <property name="windowTitle">
-    <string>Open documents</string>
+    <string>Data manager</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
@@ -151,7 +163,7 @@
      <property name="spacing">
       <number>0</number>
      </property>
-     <item row="0" column="1">
+     <item row="0" column="0">
       <widget class="QToolButton" name="closeDocument">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -163,13 +175,10 @@
         <string>Close</string>
        </property>
        <property name="icon">
-        <iconset resource="icons.qrc">
-         <normaloff>:/icons/Icons/toolb_close.ico</normaloff>:/icons/Icons/toolb_close.ico</iconset>
+        <iconset resource="resources.qrc">
+         <normaloff>:/Icons/toolb_close.ico</normaloff>:/Icons/toolb_close.ico</iconset>
        </property>
       </widget>
-     </item>
-     <item row="1" column="0" colspan="2">
-      <widget class="QListWidget" name="openFilesWidget"/>
      </item>
     </layout>
    </widget>
@@ -222,8 +231,8 @@
           <string>Compile</string>
          </property>
          <property name="icon">
-          <iconset resource="icons.qrc">
-           <normaloff>:/icons/Icons/toolb_build.ico</normaloff>:/icons/Icons/toolb_build.ico</iconset>
+          <iconset resource="resources.qrc">
+           <normaloff>:/Icons/toolb_build.ico</normaloff>:/Icons/toolb_build.ico</iconset>
          </property>
         </widget>
        </item>
@@ -233,8 +242,8 @@
           <string>Compile &amp; Run</string>
          </property>
          <property name="icon">
-          <iconset resource="icons.qrc">
-           <normaloff>:/icons/Icons/toolb_build_and_run.ico</normaloff>:/icons/Icons/toolb_build_and_run.ico</iconset>
+          <iconset resource="resources.qrc">
+           <normaloff>:/Icons/toolb_build_and_run.ico</normaloff>:/Icons/toolb_build_and_run.ico</iconset>
          </property>
         </widget>
        </item>
@@ -244,8 +253,8 @@
           <string>Run</string>
          </property>
          <property name="icon">
-          <iconset resource="icons.qrc">
-           <normaloff>:/icons/Icons/toolb_run.ico</normaloff>:/icons/Icons/toolb_run.ico</iconset>
+          <iconset resource="resources.qrc">
+           <normaloff>:/Icons/toolb_run.ico</normaloff>:/Icons/toolb_run.ico</iconset>
          </property>
         </widget>
        </item>
@@ -255,8 +264,8 @@
           <string>Close</string>
          </property>
          <property name="icon">
-          <iconset resource="icons.qrc">
-           <normaloff>:/icons/Icons/toolb_close.ico</normaloff>:/icons/Icons/toolb_close.ico</iconset>
+          <iconset resource="resources.qrc">
+           <normaloff>:/Icons/toolb_close.ico</normaloff>:/Icons/toolb_close.ico</iconset>
          </property>
         </widget>
        </item>
@@ -378,19 +387,6 @@
      <property name="bottomMargin">
       <number>0</number>
      </property>
-     <item row="0" column="1">
-      <widget class="QPushButton" name="nextPage">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Next Page</string>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="5">
       <spacer name="horizontalSpacer_2">
        <property name="orientation">
@@ -403,13 +399,6 @@
         </size>
        </property>
       </spacer>
-     </item>
-     <item row="0" column="3">
-      <widget class="QPushButton" name="reloadButton">
-       <property name="text">
-        <string>Reload</string>
-       </property>
-      </widget>
      </item>
      <item row="1" column="0" colspan="6">
       <widget class="QWebView" name="webView">
@@ -426,15 +415,15 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="2">
-      <widget class="QPushButton" name="stopButton">
-       <property name="text">
-        <string>Stop</string>
+     <item row="0" column="4">
+      <widget class="QProgressBar" name="progressBar">
+       <property name="value">
+        <number>0</number>
        </property>
       </widget>
      </item>
      <item row="0" column="0">
-      <widget class="QPushButton" name="previousPage">
+      <widget class="QToolButton" name="previousPage">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -444,12 +433,48 @@
        <property name="text">
         <string>Previous page</string>
        </property>
+       <property name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/Icons/toolb_bck.ico</normaloff>:/Icons/toolb_bck.ico</iconset>
+       </property>
       </widget>
      </item>
-     <item row="0" column="4">
-      <widget class="QProgressBar" name="progressBar">
-       <property name="value">
-        <number>0</number>
+     <item row="0" column="1">
+      <widget class="QToolButton" name="nextPage">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Next Page</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/Icons/toolb_for.ico</normaloff>:/Icons/toolb_for.ico</iconset>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QToolButton" name="stopButton">
+       <property name="text">
+        <string>Stop</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/Icons/toolb_chelp.ico</normaloff>:/Icons/toolb_chelp.ico</iconset>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QToolButton" name="reloadButton">
+       <property name="text">
+        <string>Reload</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/Icons/refresh.ico</normaloff>:/Icons/refresh.ico</iconset>
        </property>
       </widget>
      </item>
@@ -458,8 +483,8 @@
   </widget>
   <action name="actionNew">
    <property name="icon">
-    <iconset resource="icons.qrc">
-     <normaloff>:/icons/Icons/toolb_new.ico</normaloff>:/icons/Icons/toolb_new.ico</iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/toolb_new.ico</normaloff>:/Icons/toolb_new.ico</iconset>
    </property>
    <property name="text">
     <string>New</string>
@@ -473,8 +498,8 @@
   </action>
   <action name="actionOpen">
    <property name="icon">
-    <iconset resource="icons.qrc">
-     <normaloff>:/icons/Icons/toolb_open.ico</normaloff>:/icons/Icons/toolb_open.ico</iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/toolb_open.ico</normaloff>:/Icons/toolb_open.ico</iconset>
    </property>
    <property name="text">
     <string>Open</string>
@@ -488,8 +513,8 @@
   </action>
   <action name="actionSave">
    <property name="icon">
-    <iconset resource="icons.qrc">
-     <normaloff>:/icons/Icons/toolb_save.ico</normaloff>:/icons/Icons/toolb_save.ico</iconset>
+    <iconset>
+     <normaloff>Icons/toolb_save.ico</normaloff>Icons/toolb_save.ico</iconset>
    </property>
    <property name="text">
     <string>Save</string>
@@ -503,8 +528,8 @@
   </action>
   <action name="actionSave_As">
    <property name="icon">
-    <iconset resource="icons.qrc">
-     <normaloff>:/icons/Icons/toolb_saveas.ico</normaloff>:/icons/Icons/toolb_saveas.ico</iconset>
+    <iconset>
+     <normaloff>Icons/toolb_saveas.ico</normaloff>Icons/toolb_saveas.ico</iconset>
    </property>
    <property name="text">
     <string>Save As</string>
@@ -517,22 +542,18 @@
    </property>
   </action>
   <action name="actionExit">
+   <property name="icon">
+    <iconset>
+     <normaloff>Icons/toolb_close.ico</normaloff>Icons/toolb_close.ico</iconset>
+   </property>
    <property name="text">
     <string>Exit</string>
    </property>
   </action>
-  <action name="actionOpen_Doccuments">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Open Documents</string>
-   </property>
-  </action>
   <action name="actionUndo">
    <property name="icon">
-    <iconset resource="icons.qrc">
-     <normaloff>:/icons/Icons/toolb_undo.ico</normaloff>:/icons/Icons/toolb_undo.ico</iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/toolb_undo.ico</normaloff>:/Icons/toolb_undo.ico</iconset>
    </property>
    <property name="text">
     <string>Undo</string>
@@ -543,8 +564,8 @@
   </action>
   <action name="actionRedo">
    <property name="icon">
-    <iconset resource="icons.qrc">
-     <normaloff>:/icons/Icons/toolb_redo.ico</normaloff>:/icons/Icons/toolb_redo.ico</iconset>
+    <iconset>
+     <normaloff>Icons/toolb_redo.ico</normaloff>Icons/toolb_redo.ico</iconset>
    </property>
    <property name="text">
     <string>Redo</string>
@@ -555,8 +576,8 @@
   </action>
   <action name="actionCopy">
    <property name="icon">
-    <iconset resource="icons.qrc">
-     <normaloff>:/icons/Icons/toolb_copy.ico</normaloff>:/icons/Icons/toolb_copy.ico</iconset>
+    <iconset>
+     <normaloff>Icons/toolb_copy.ico</normaloff>Icons/toolb_copy.ico</iconset>
    </property>
    <property name="text">
     <string>Copy</string>
@@ -567,8 +588,8 @@
   </action>
   <action name="actionCut">
    <property name="icon">
-    <iconset resource="icons.qrc">
-     <normaloff>:/icons/Icons/toolb_cut.ico</normaloff>:/icons/Icons/toolb_cut.ico</iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/toolb_cut.ico</normaloff>:/Icons/toolb_cut.ico</iconset>
    </property>
    <property name="text">
     <string>Cut</string>
@@ -579,8 +600,8 @@
   </action>
   <action name="actionPaste">
    <property name="icon">
-    <iconset resource="icons.qrc">
-     <normaloff>:/icons/Icons/toolb_paste.ico</normaloff>:/icons/Icons/toolb_paste.ico</iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/toolb_paste.ico</normaloff>:/Icons/toolb_paste.ico</iconset>
    </property>
    <property name="text">
     <string>Paste</string>
@@ -591,8 +612,8 @@
   </action>
   <action name="actionCompile">
    <property name="icon">
-    <iconset resource="icons.qrc">
-     <normaloff>:/icons/Icons/toolb_build.ico</normaloff>:/icons/Icons/toolb_build.ico</iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/toolb_build.ico</normaloff>:/Icons/toolb_build.ico</iconset>
    </property>
    <property name="text">
     <string>Compile</string>
@@ -603,8 +624,8 @@
   </action>
   <action name="actionCompileAndRun">
    <property name="icon">
-    <iconset resource="icons.qrc">
-     <normaloff>:/icons/Icons/toolb_build_and_run.ico</normaloff>:/icons/Icons/toolb_build_and_run.ico</iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/toolb_build_and_run.ico</normaloff>:/Icons/toolb_build_and_run.ico</iconset>
    </property>
    <property name="text">
     <string>CompileAndRun</string>
@@ -634,8 +655,8 @@
   </action>
   <action name="actionRun">
    <property name="icon">
-    <iconset resource="icons.qrc">
-     <normaloff>:/icons/Icons/toolb_run.ico</normaloff>:/icons/Icons/toolb_run.ico</iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/toolb_run.ico</normaloff>:/Icons/toolb_run.ico</iconset>
    </property>
    <property name="text">
     <string>Run</string>
@@ -660,6 +681,14 @@
     <string>Settings</string>
    </property>
   </action>
+  <action name="actionOpen_Doccuments">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Open Documents</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -670,41 +699,9 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="icons.qrc"/>
+  <include location="resources.qrc"/>
  </resources>
  <connections>
-  <connection>
-   <sender>actionOpen_Doccuments</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>openFiles</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>127</x>
-     <y>276</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>openFiles</sender>
-   <signal>visibilityChanged(bool)</signal>
-   <receiver>actionOpen_Doccuments</receiver>
-   <slot>setChecked(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>127</x>
-     <y>276</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>ConsoleArea</sender>
    <signal>visibilityChanged(bool)</signal>
@@ -766,70 +763,6 @@
     <hint type="destinationlabel">
      <x>805</x>
      <y>256</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>previousPage</sender>
-   <signal>clicked()</signal>
-   <receiver>webView</receiver>
-   <slot>back()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>694</x>
-     <y>81</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>805</x>
-     <y>277</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>nextPage</sender>
-   <signal>clicked()</signal>
-   <receiver>webView</receiver>
-   <slot>forward()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>779</x>
-     <y>81</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>805</x>
-     <y>277</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>stopButton</sender>
-   <signal>clicked()</signal>
-   <receiver>webView</receiver>
-   <slot>stop()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>838</x>
-     <y>81</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>805</x>
-     <y>277</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>reloadButton</sender>
-   <signal>clicked()</signal>
-   <receiver>webView</receiver>
-   <slot>reload()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>887</x>
-     <y>81</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>805</x>
-     <y>277</y>
     </hint>
    </hints>
   </connection>
@@ -926,6 +859,38 @@
     <hint type="destinationlabel">
      <x>-1</x>
      <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>openFiles</sender>
+   <signal>visibilityChanged(bool)</signal>
+   <receiver>actionOpen_Doccuments</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>127</x>
+     <y>276</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionOpen_Doccuments</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>openFiles</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>127</x>
+     <y>276</y>
     </hint>
    </hints>
   </connection>

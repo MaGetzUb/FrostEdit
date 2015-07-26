@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/icons">
+    <qresource prefix="/">
         <file>Icons/error.ico</file>
         <file>Icons/frostedit.ico</file>
         <file>Icons/function.ico</file>
@@ -18,5 +18,12 @@
         <file>Icons/toolb_saveas.ico</file>
         <file>Icons/toolb_undo.ico</file>
         <file>Icons/warning.ico</file>
+        <file>Images/Splash.png</file>
+        <file>Icons/toolb_bck.ico</file>
+        <file>Icons/toolb_for.ico</file>
+        <file>Icons/toolb_home.ico</file>
+        <file>Icons/xSelectAll.ico</file>
+        <file>Icons/toolb_chelp.ico</file>
+        <file>Icons/refresh.ico</file>
     </qresource>
 </RCC>

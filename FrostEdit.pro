@@ -6,12 +6,10 @@
 
 QT += core gui xml network concurrent webkitwidgets
 
-CONFIG += c++11
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-
-TARGET = FrostEdit
+CONFIG += c++14
 TEMPLATE = app
+TARGET = FrostEdit
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 
 SOURCES += main.cpp\
@@ -44,7 +42,6 @@ SOURCES += main.cpp\
     settingsmenu.cpp \
     TextEditor/qate/tabsettings.cpp \
     TextEditor/fatehighlighter.cpp \
-    documentitem.cpp \
     settings.cpp \
     TextEditor/codemodel.cpp \
     TextEditor/frostcodemodel.cpp \
@@ -55,8 +52,11 @@ SOURCES += main.cpp\
     appearancetab.cpp \
     generalsettingstab.cpp \
     colorscheme.cpp \
-    TextEditor/codepoint.cpp
-
+    TextEditor/codepoint.cpp \
+    documentitem.cpp \
+    filelistwidget.cpp \
+    combotabwidget.cpp \
+    filesystemmodel.cpp
 
 HEADERS  += \
     TextEditor/document.hpp \
@@ -112,7 +112,10 @@ HEADERS  += \
     TextEditor/linenumberarea.hpp \
     appearancetab.hpp \
     generalsettingstab.hpp \
-    colorscheme.hpp
+    colorscheme.hpp \
+    filelistwidget.hpp \
+    combotabwidget.hpp \
+    filesystemmodel.hpp
 
 FORMS    += \
     tabwidget.ui \
@@ -123,7 +126,8 @@ FORMS    += \
     quitdialog.ui \
     TextEditor/findreplacedialog.ui \
     appearancetab.ui \
-    generalsettingstab.ui
+    generalsettingstab.ui \
+    combotabwidget.ui
 
 RESOURCES += \
-    icons.qrc \
+    resources.qrc

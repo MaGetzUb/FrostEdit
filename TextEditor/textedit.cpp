@@ -825,10 +825,10 @@ void TextEdit::initCompleter() {
 
 					QStandardItem* item(new QStandardItem());
 					if(key == "functions") {
-						item->setIcon(QIcon(":/icons/Icons/function.ico"));
+						item->setIcon(QIcon(":/icons/function.ico"));
 						//item->setForeground(hiltter->getFormat(Highlighter::Function).foreground());
 					} else if(key == "keywords"){
-						item->setIcon(QIcon(":/icons/Icons/keyword.ico"));
+						item->setIcon(QIcon(":/icons/keyword.ico"));
 						//item->setForeground(hiltter->getFormat(Highlighter::Keyword).foreground());
 					} else if(key == "predefined constant"){
 						//item->setForeground(hiltter->getFormat(Highlighter::Others).foreground());
@@ -896,7 +896,7 @@ void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *e) {
 
 	QPainter painter(mLineNumberWidget);
 	painter.fillRect(e->rect(), mLineNumberFormat.background().color());
-	painter.fillRect(e->rect().right()-space*2, e->rect().top(), e->rect().right(), e->rect().bottom(), mLineNumberFormat.background().color().dark(130));
+	painter.fillRect(e->rect().right()-space*2, e->rect().top(), e->rect().right(), e->rect().bottom(), QColor(0, 0, 0, 32));
 	//int blockid = 0;
 	QTextCursor cursor = textCursor();
 
